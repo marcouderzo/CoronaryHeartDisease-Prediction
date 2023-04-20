@@ -1,5 +1,5 @@
 # https://www.kaggle.com/datasets/fedesoriano/heart-failure-prediction
-data.orig <- read.csv("heart_data.csv")
+data.orig <- read.csv("data/heart_data.csv")
 
 head(data.orig)
 
@@ -33,15 +33,44 @@ data$RestingECG[data$RestingECG == "ST"] <- 1
 data$RestingECG[data$RestingECG == "LVH"] <- 2
 data$RestingECG <- as.numeric(data$RestingECG)
 
+# ExerciseAngina: 0 -> "N", 1 -> "Y"
+data$ExerciseAngina[data$ExerciseAngina == "N"] <- 0
+data$ExerciseAngina[data$ExerciseAngina == "Y"] <- 1
+data$ExerciseAngina <- as.numeric(data$ExerciseAngina)
+
 # ST_slope: 1 -> "Up", 2 -> "Flat", 3 -> "Down"
 data$ST_Slope[data$ST_Slope == "Up"] <- 1
 data$ST_Slope[data$ST_Slope == "Flat"] <- 2
 data$ST_Slope[data$ST_Slope == "Down"] <- 3
 data$ST_Slope <- as.numeric(data$ST_Slope)
 
+attach(data)
+
+# data balance check
+prop.table(table(HeartDisease))
+
+# visualizing the data
+barplot(table(data.orig$ChestPainType))
+
+counts <- table(Sex, HeartDisease)
+barplot(counts, beside=T, names.arg=c("Normal", "Heart disease"),
+        legend.text = c("M", "F"))
+
+counts <- table(data.orig$ChestPainType, HeartDisease)
+barplot(counts, beside=T, names.arg=c("Normal", "Heart disease"),
+        legend.text = T)
+
+# TODO: implement better legend and better graphics
+
+boxplot(Age ~ HeartDisease)
+hist(Age)
+
+boxplot(RestingBP ~ HeartDisease)
+hist(RestingBP)
+
+boxplot(Cholesterol ~ HeartDisease)
+hist(Cholesterol)
+
 # TODO
-# - describe data
-# - deal with categorical data
 # - plot values with histogram and boxplot
-# - check distribution of Heart Attack if balanced
 # - correlations, pairplot
