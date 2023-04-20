@@ -12,6 +12,9 @@
 - **ExerciseAngina**: exercise-induced angina (Y: Yes, N: No)
 - **Oldpeak**: oldpeak = ST (Numeric value measured in depression)
 - **ST_Slope**: the slope of the peak exercise ST segment (Up: upsloping, Flat: flat, Down: downsloping)
+
+Output:
+
 - **HeartDisease**: output class (1: heart disease, 0: Normal)
 
 ## Age
@@ -159,5 +162,24 @@ Description: whether or not the patient experiences exercise-induced angina (hea
 ### Background Knowledge
 
 Angina is pain in the chest that comes on with exercise, stress, or other things that make the heart work harder. It is an extremely common symptom of coronary artery disease, which is caused by cholesterol-clogged coronary arteries. Angina may feel like pressure in the chest, jaw or arm. It often occurs with exercise or stress. As the heart pumps harder to keep up with what you are doing, it needs more oxygen-rich blood. If this demand is not met, you may feel pain or discomfort in your chest.
+
+
+## Oldpeak
+
+Type:
+
+Values:
+
+Description:
+
+
+## ST_Slope
+
+Type:
+
+Values:
+
+Description:
+
 
 
