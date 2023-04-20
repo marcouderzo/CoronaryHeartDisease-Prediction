@@ -107,5 +107,57 @@ Description: blood sugar level when the patient is fasted, measured in mg/dl. Va
 This measures your blood sugar after an overnight fast (not eating). A fasting blood sugar level of 99 mg/dL or lower is normal, 100 to 125 mg/dL indicates you have prediabetes, and 126 mg/dL or higher indicates you have diabetes.
 
 
+## RestingECG
+
+Type: string
+
+Values: (Normal, ST, LVH)
+
+Description: Results of resting electrocardiogram. ST: having **ST-T** wave abnormality (T wave inversions and/or ST elevation or depression of > 0.05 mV). **LVH**: showing probable or definite left ventricular hypertrophy by Estes' criteria.
+
+### Background Knowledge
+
+
+An electrocardiogram (ECG or EKG) is a test that records the electrical activity of the heart. It consists of a series of waveforms that correspond to the different phases of the cardiac cycle.
+
+<img src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/9e/SinusRhythmLabels.svg/800px-SinusRhythmLabels.svg.png" width="600" height="600" >
+
+The ECG trace consists of several waves and intervals, including:
+
+- P wave: represents the depolarization (contraction) of the atria.
+- QRS complex: represents the depolarization (contraction) of the ventricles.
+- T wave: represents the repolarization (relaxation) of the ventricles.
+- The ST segment is the part of the ECG that connects the QRS complex and the T wave. It represents the time when the ventricles are depolarized but have not yet fully repolarized.
+
+ST-T wave abnormality refers to a change in the normal shape or position of the ST segment and T wave on an ECG. T wave inversions and/or ST elevation or depression of > 0.05 mV are the most common types of ST-T wave abnormalities.
+
+T wave inversions are when the T wave is inverted, meaning that it is pointing downward instead of upward. This can be a sign of myocardial ischemia or infarction, which means that there is reduced blood flow or damage to the heart muscle.
+
+ST elevation is when the ST segment is elevated above the baseline. This can be a sign of acute myocardial infarction (heart attack) or pericarditis (inflammation of the lining around the heart).
+
+ST depression is when the ST segment is depressed below the baseline. This can be a sign of myocardial ischemia, which means that there is reduced blood flow to the heart muscle.
+
+
+
+## MaxHR
+
+Type: int
+
+Values: positive integers between 60 and 202.
+
+Description: maximum heart rate achieved by the patient.
+
+
+## ExerciseAngina
+
+Type: char
+
+Values: (Y: Yes, N: No)
+
+Description: whether or not the patient experiences exercise-induced angina (heart-related chest pain)
+
+### Background Knowledge
+
+Angina is pain in the chest that comes on with exercise, stress, or other things that make the heart work harder. It is an extremely common symptom of coronary artery disease, which is caused by cholesterol-clogged coronary arteries. Angina may feel like pressure in the chest, jaw or arm. It often occurs with exercise or stress. As the heart pumps harder to keep up with what you are doing, it needs more oxygen-rich blood. If this demand is not met, you may feel pain or discomfort in your chest.
 
 
