@@ -1,5 +1,13 @@
 # https://www.kaggle.com/datasets/fedesoriano/heart-failure-prediction
-data.orig <- read.csv("data/heart_data.csv")
+install.packages("ggplot2")
+install.packages("corrplot")
+install.packages("tidymodels")
+
+library(ggplot2)
+library(corrplot)
+library(tidymodels)
+
+data.orig <- read.csv("data/heart_data.csv", stringsAsFactors = T)
 
 head(data.orig)
 
@@ -8,41 +16,10 @@ nrows <- dim(data.orig)[1]
 ncols <- dim(data.orig)[2]
 
 # we check if there are missing values
-anyNA(data.orig) # apparently no
+anyNA(data.orig)
 
-summary(data.orig)
-
+# copy of dataset in case I need to change it
 data <- data.frame(data.orig)
-
-# categorical values
-# Sex: 0 -> male, 1 -> female
-data$Sex[data$Sex == "M"] <- 0
-data$Sex[data$Sex == "F"] <- 1
-data$Sex <- as.numeric(data$Sex)
-
-# ChestPainType: 1 -> TA, 2 -> ATA, 3 -> NAP, 4 -> ASY
-data$ChestPainType[data$ChestPainType == "TA"] <- 1
-data$ChestPainType[data$ChestPainType == "ATA"] <- 2
-data$ChestPainType[data$ChestPainType == "NAP"] <- 3
-data$ChestPainType[data$ChestPainType == "ASY"] <- 4
-data$ChestPainType <- as.numeric(data$ChestPainType)
-
-# RestingECG: 0 -> "Normal", 1 -> "ST", 2 -> "LVH"
-data$RestingECG[data$RestingECG == "Normal"] <- 0
-data$RestingECG[data$RestingECG == "ST"] <- 1
-data$RestingECG[data$RestingECG == "LVH"] <- 2
-data$RestingECG <- as.numeric(data$RestingECG)
-
-# ExerciseAngina: 0 -> "N", 1 -> "Y"
-data$ExerciseAngina[data$ExerciseAngina == "N"] <- 0
-data$ExerciseAngina[data$ExerciseAngina == "Y"] <- 1
-data$ExerciseAngina <- as.numeric(data$ExerciseAngina)
-
-# ST_slope: 1 -> "Up", 2 -> "Flat", 3 -> "Down"
-data$ST_Slope[data$ST_Slope == "Up"] <- 1
-data$ST_Slope[data$ST_Slope == "Flat"] <- 2
-data$ST_Slope[data$ST_Slope == "Down"] <- 3
-data$ST_Slope <- as.numeric(data$ST_Slope)
 
 attach(data)
 
@@ -50,17 +27,16 @@ attach(data)
 prop.table(table(HeartDisease))
 
 # visualizing the data
-barplot(table(data.orig$ChestPainType))
+# TODO: implement better legend and better graphics
+barplot(table(ChestPainType))
 
 counts <- table(Sex, HeartDisease)
 barplot(counts, beside=T, names.arg=c("Normal", "Heart disease"),
         legend.text = c("M", "F"))
 
-counts <- table(data.orig$ChestPainType, HeartDisease)
+counts <- table(ChestPainType, HeartDisease)
 barplot(counts, beside=T, names.arg=c("Normal", "Heart disease"),
         legend.text = T)
-
-# TODO: implement better legend and better graphics
 
 boxplot(Age ~ HeartDisease)
 hist(Age)
@@ -69,7 +45,71 @@ boxplot(RestingBP ~ HeartDisease)
 hist(RestingBP)
 
 boxplot(Cholesterol ~ HeartDisease)
-hist(Cholesterol)
+ggplot(data, aes(x = Cholesterol, fill=HeartDisease)) + 
+  geom_density(alpha = 0.4) +
+  facet_grid(~HeartDisease)
+
+counts <- table(FastingBS, HeartDisease)
+barplot(counts, beside=T, names.arg=c("Normal", "Heart disease"),
+        legend.text = T)
+
+counts <- table(RestingECG, HeartDisease)
+barplot(counts, beside=T, names.arg=c("Normal", "Heart disease"),
+        legend.text = T)
+
+boxplot(MaxHR ~ HeartDisease)
+hist(MaxHR)
+
+counts <- table(ExerciseAngina, HeartDisease)
+barplot(counts, beside=T, names.arg=c("Normal", "Heart disease"),
+        legend.text = T)
+
+boxplot(Oldpeak ~ HeartDisease)
+hist(Oldpeak)
+
+counts <- table(ST_Slope, HeartDisease)
+barplot(counts, beside=T, names.arg=c("Normal", "Heart disease"),
+        legend.text = T)
+
+# correlation matrix
+nums <- unlist(lapply(data, is.numeric), use.names = FALSE)
+cor.data <- cor(data[, nums])
+corrplot(cor.data,
+         method="color",
+         diag=F,
+         tl.cex=0.4,
+         number.cex=0.5,
+         tl.col="black",
+         addCoef.col="grey50",
+         cl.pos="n")
+
+# Train-Test split
+set.seed(42)
+split <- initial_split(data, prop=0.80)
+
+train <- training(split)
+test <- testing(split)
+
+y.train <- train$HeartDisease
+X.train <- train[, !names(train) %in% c("HeartDisease")]
+
+y.test <- test$HeartDisease
+X.test <- test[, !names(test) %in% c("HeartDisease")]
+
+
+# Evaluation
+# Simple Logistic Regression
+# For Marco: this is just a test, do as you wish
+glm.compl <- glm(data=train, HeartDisease~., family="binomial")
+s <- summary(glm.compl)
+r2 <- 1 - (s$deviance/s$null.deviance)
+1/(1-r2)
+
+pred.glm.compl <- predict(glm.compl, test, type="response")
+pred.glm.compl.05 <- ifelse(pred.glm.compl > 0.6, 1, 0)
+
+table(test$HeartDisease, pred.glm.compl.05)
+mean(pred.glm.compl.05 != test$HeartDisease)
 
 # TODO
 # - plot values with histogram and boxplot
