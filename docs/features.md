@@ -21,7 +21,7 @@ Output:
 
 Type: int
 
-Values: positive integers
+Values: positive integers between 28 and 77
 
 Description: age of the patient in years.
 
@@ -67,7 +67,7 @@ A chest pain is very likely **non-anginal (NAP)**, meaning non-cardiac related, 
 
 Type: int
 
-Values: positive integers
+Values: positive integers between 0 and 200
 
 Description: resting blood pressure, expressed in mm Hg
 
@@ -85,7 +85,7 @@ In this dataset, it seems that RestingBP only shows systolic pressure, as values
 
 Type: int
 
-Values: positive integers
+Values: positive integers between 0 and 603
 
 Description: A person's serum cholesterol level represents the amount of total cholesterol in their blood, and is measured in mm/dl.
 
@@ -99,7 +99,7 @@ A person's serum cholesterol level represents the amount of total cholesterol in
 
 ## FastingBS
 
-Type: int
+Type: int, binary
 
 Values: (1: fasted, 0: not fasted)
 
@@ -166,20 +166,26 @@ Angina is pain in the chest that comes on with exercise, stress, or other things
 
 ## Oldpeak
 
-Type:
+Type: float
 
-Values:
+Values: floats between -2.6 and 6.2
 
-Description:
+Description: ST depression induced by exercise relative to rest.
+
+### Background Knowledge
+
+ST depression refers to a finding on an electrocardiogram, wherein the trace in the ST segment is abnormally low below the baseline. ST segment depression may be determined by measuring the vertical distance between the patient's trace and the isoelectric line at a location 2-3 millimeters from the QRS complex. It is significant if it is more than 1 mm in V5-V6, or 1.5 mm in AVF or III.
+
+In a cardiac stress test, an ST depression of at least 1 mm after adenosine administration indicates a reversible ischaemia, while an exercise stress test requires an ST depression of at least 2 mm to significantly indicate reversible ischaemia.
 
 
 ## ST_Slope
 
-Type:
+Type: string
 
-Values:
+Values: (Up, Flat, Down)
 
-Description:
+Description: the slope of the peak exercise ST segment. 
 
 
 
