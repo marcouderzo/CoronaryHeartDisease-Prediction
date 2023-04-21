@@ -17,10 +17,11 @@ This dataset was created by combining different datasets already available indep
 - Long Beach VA: 200 observations
 - Stalog (Heart) Data Set: 270 observations
 
-- Total: 1190 observations
-- Duplicated: 272 observations
+Total: 1190 observations
 
-- Final dataset: 918 observations
+Duplicated: 272 observations
+
+Final dataset: 918 observations
 
 Every dataset used can be found under the Index of heart disease datasets from UCI Machine Learning Repository at [this link](https://archive.ics.uci.edu/ml/machine-learning-databases/heart-disease/)
 
