@@ -2,10 +2,12 @@
 install.packages("ggplot2")
 install.packages("corrplot")
 install.packages("tidymodels")
+install.packages("naivebayes")
 
 library(ggplot2)
 library(corrplot)
 library(tidymodels)
+library(naivebayes)
 
 data.orig <- read.csv("data/heart_data.csv", stringsAsFactors = T)
 
@@ -99,22 +101,6 @@ X.test <- test[, !names(test) %in% c("HeartDisease")]
 
 # Evaluation
 # Simple Logistic Regression
-# For Marco: this is just a test, do as you wish
-
-
-#glm.compl <- glm(data=train, HeartDisease~., family="binomial")
-#s <- summary(glm.compl)
-#r2 <- 1 - (s$deviance/s$null.deviance)
-#1/(1-r2)
-#
-#pred.glm.compl <- predict(glm.compl, test, type="response")
-#pred.glm.compl.05 <- ifelse(pred.glm.compl > 0.6, 1, 0)
-#
-#table(test$HeartDisease, pred.glm.compl.05)
-#mean(pred.glm.compl.05 != test$HeartDisease)
-
-
-### Testing some Logistic Regression with glm
 
 glm.model <- glm(data=train, HeartDisease~., family="binomial")
 glm_summary <- summary(glm.model)
@@ -123,7 +109,7 @@ glm_summary <- summary(glm.model)
 r2 <- 1 - (glm_summary$deviance/glm_summary$null.deviance) # null.deviance: deviance of model with only intercept term.
 1/(1-r2) # odds of success for a particular observation in logistic regression model: probability of success / probability of failure
 
-
+# prediction and conversion to binary
 prediction.glm.model <- predict(glm.model, newdata=test, type="response")
 prediction.glm.model.binary <- ifelse(prediction.glm.model > 0.6, 1, 0)
 
@@ -140,6 +126,22 @@ cat("Recall:", round(recall, 3), "\n")
 cat("Confusion Matrix:\n")
 print(conf_matrix)
 
+
+
+### Naive Bayes Classifier
+
+train$HeartDisease <- as.factor(train$HeartDisease)
+
+naivebayes.model <- naive_bayes(HeartDisease~., data=train)
+prediction <- predict(naivebayes.model, train)
+head(cbind(prediction, train))
+
+
+#Error in table(prediction, test$HeartDisease) : 
+#tutti gli argomenti devono avere la medesima lunghezza
+#BUT WHY WOULD THAT BE
+
+naivebayes.conf_matrix <- table(prediction, test$HeartDisease)
 
 
 # TODO
