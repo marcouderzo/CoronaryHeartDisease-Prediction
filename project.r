@@ -123,9 +123,24 @@ glm_summary <- summary(glm.model)
 r2 <- 1 - (glm_summary$deviance/glm_summary$null.deviance) # null.deviance: deviance of model with only intercept term.
 1/(1-r2) # odds of success for a particular observation in logistic regression model: probability of success / probability of failure
 
-prediction.glm.model <- predict(glm.model, newdata=test, type="response")
 
-confusionMatrix(predictions > 0.5, test~HeartDisease)
+prediction.glm.model <- predict(glm.model, newdata=test, type="response")
+prediction.glm.model.binary <- ifelse(prediction.glm.model > 0.6, 1, 0)
+
+conf_matrix <- table(test$HeartDisease, prediction.glm.model.binary) #tried also with correlationMatrix from carel package but having problems with levels
+mean(prediction.glm.model.binary != test$HeartDisease) #how many are wrong
+
+accuracy <- mean(diag(conf_matrix)) # proportion of correct predictions
+precision <- conf_matrix[2,2] / sum(conf_matrix[,2]) # true positive rate
+recall <- conf_matrix[2,2] / sum(conf_matrix[2,]) # sensitivity
+
+cat("Accuracy:", round(accuracy, 3), "\n")
+cat("Precision:", round(precision, 3), "\n")
+cat("Recall:", round(recall, 3), "\n")
+cat("Confusion Matrix:\n")
+print(conf_matrix)
+
+
 
 # TODO
 # - plot values with histogram and boxplot
