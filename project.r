@@ -116,7 +116,7 @@ prediction.glm.model.binary <- ifelse(prediction.glm.model > 0.6, 1, 0)
 conf_matrix <- table(test$HeartDisease, prediction.glm.model.binary) #tried also with correlationMatrix from carel package but having problems with levels
 mean(prediction.glm.model.binary != test$HeartDisease) #how many are wrong
 
-accuracy <- mean(diag(conf_matrix)) # proportion of correct predictions
+accuracy <- sum(diag(conf_matrix))/sum(conf_matrix) # proportion of correct predictions
 precision <- conf_matrix[2,2] / sum(conf_matrix[,2]) # true positive rate
 recall <- conf_matrix[2,2] / sum(conf_matrix[2,]) # sensitivity
 
