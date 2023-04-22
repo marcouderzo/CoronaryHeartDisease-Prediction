@@ -100,17 +100,34 @@ X.test <- test[, !names(test) %in% c("HeartDisease")]
 # Evaluation
 # Simple Logistic Regression
 # For Marco: this is just a test, do as you wish
-glm.compl <- glm(data=train, HeartDisease~., family="binomial")
-s <- summary(glm.compl)
-r2 <- 1 - (s$deviance/s$null.deviance)
-1/(1-r2)
 
-pred.glm.compl <- predict(glm.compl, test, type="response")
-pred.glm.compl.05 <- ifelse(pred.glm.compl > 0.6, 1, 0)
 
-table(test$HeartDisease, pred.glm.compl.05)
-mean(pred.glm.compl.05 != test$HeartDisease)
+#glm.compl <- glm(data=train, HeartDisease~., family="binomial")
+#s <- summary(glm.compl)
+#r2 <- 1 - (s$deviance/s$null.deviance)
+#1/(1-r2)
+#
+#pred.glm.compl <- predict(glm.compl, test, type="response")
+#pred.glm.compl.05 <- ifelse(pred.glm.compl > 0.6, 1, 0)
+#
+#table(test$HeartDisease, pred.glm.compl.05)
+#mean(pred.glm.compl.05 != test$HeartDisease)
+
+
+### Testing some Logistic Regression with glm
+
+glm.model <- glm(data=train, HeartDisease~., family="binomial")
+glm_summary <- summary(glm.model)
+
+#calculate odds of success given R-squared value
+r2 <- 1 - (glm_summary$deviance/glm_summary$null.deviance) # null.deviance: deviance of model with only intercept term.
+1/(1-r2) # odds of success for a particular observation in logistic regression model: probability of success / probability of failure
+
+prediction.glm.model <- predict(glm.model, newdata=test, type="response")
+
+confusionMatrix(predictions > 0.5, test~HeartDisease)
 
 # TODO
 # - plot values with histogram and boxplot
 # - correlations, pairplot
+
