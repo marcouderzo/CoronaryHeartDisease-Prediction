@@ -1,8 +1,12 @@
 # https://www.kaggle.com/datasets/fedesoriano/heart-failure-prediction
+install.packages("pROC")
 install.packages("ggplot2")
 install.packages("corrplot")
 install.packages("tidymodels")
 
+library(MASS)
+library(pROC)
+library(class)
 library(ggplot2)
 library(corrplot)
 library(tidymodels)
@@ -70,6 +74,11 @@ hist(Oldpeak)
 counts <- table(ST_Slope, HeartDisease)
 barplot(counts, beside=T, names.arg=c("Normal", "Heart disease"),
         legend.text = T)
+
+
+# dealing with missing values
+RestingBP[RestingBP == 0] <- median(RestingBP)
+
 
 # correlation matrix
 nums <- unlist(lapply(data, is.numeric), use.names = FALSE)
@@ -140,9 +149,78 @@ cat("Recall:", round(recall, 3), "\n")
 cat("Confusion Matrix:\n")
 print(conf_matrix)
 
+# For Marco
+# - wrong function for accuracy
+# - variable selection with p-value
+# - logistic regression with Ridge and Lasso regularization
+# - Naive Bayes
+# - KNN
 
 
-# TODO
-# - plot values with histogram and boxplot
-# - correlations, pairplot
+# LDA
+lda.fit <- lda(HeartDisease~., data=train)
+plot(lda.fit, type="density")
 
+# TODO: show which variables have greater impact
+
+lda.pred <- predict(lda.fit, test, type="response")
+lda.res <- lda.pred$posterior
+
+lda.pred.t3 <- as.factor(ifelse(lda.res[,2] > 0.3, 1, 0))
+lda.pred.t4 <- as.factor(ifelse(lda.res[,2] > 0.4, 1, 0))
+lda.pred.t5 <- lda.pred$class
+
+# the best result is when t = 4 if we want to minimize False Positives
+conf.mat <- table(test$HeartDisease, lda.pred.t4)
+conf.mat
+
+# error rate
+mean(lda.pred.t4!=test$HeartDisease)
+
+acc <- sum(diag(conf.mat))/sum(conf.mat)
+prec <- conf.mat[2,2] / sum(conf.mat[,2])
+rec <- conf.mat[2,2] / sum(conf.mat[2,])
+f1.score <- 2*prec*rec/(prec+rec)
+
+roc.out <- roc(controls=test$HeartDisease, cases=lda.pred$posterior[,2],
+               direction=">")
+plot(roc.out, print.auc=TRUE, legacy.axes=TRUE,
+     xlab="False positive rate", ylab="True positive rate")
+auc(roc.out)
+
+ldahist(lda.pred$x[,1], g=lda.pred$class, col=2)
+
+# TODO: how do I choose the best threshold?
+# TODO: how do I upgrade the model?
+
+
+# QDA
+qda.fit <- qda(HeartDisease~., data=train)
+
+qda.pred <- predict(qda.fit, test)
+
+qda.pred.t3<- as.factor(ifelse(qda.pred$posterior[,2] > 0.3, 1, 0))
+qda.pred.t4<- as.factor(ifelse(qda.pred$posterior[,2] > 0.4, 1, 0))
+qda.pred.t5<- as.factor(ifelse(qda.pred$posterior[,2] > 0.5, 1, 0))
+qda.pred.t6<- as.factor(ifelse(qda.pred$posterior[,2] > 0.6, 1, 0))
+
+conf.mat <- table(qda.pred.t5, test$HeartDisease)
+
+acc <- sum(diag(conf.mat))/sum(conf.mat)
+prec <- conf.mat[2,2] / sum(conf.mat[,2])
+rec <- conf.mat[2,2] / sum(conf.mat[2,])
+f1.score <- 2*prec*rec/(prec+rec)
+
+roc.out <- roc(controls=test$HeartDisease, cases=qda.pred$posterior[,2],
+               direction=">")
+plot(roc.out, print.auc=TRUE, legacy.axes=TRUE,
+     xlab="False positive rate", ylab="True positive rate")
+auc(roc.out)
+
+
+# KNN
+knn.pred <- knn(X.train[, -c(2, 3, 7, 9, 11)], X.test[, -c(2, 3, 7, 9, 11)],
+                y.train, k=5)
+table(knn.pred, y.test)
+
+# TODO: for each model write down accuracy, precision, recall
