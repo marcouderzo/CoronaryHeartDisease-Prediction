@@ -3,6 +3,7 @@ install.packages("pROC")
 install.packages("ggplot2")
 install.packages("corrplot")
 install.packages("tidymodels")
+install.packages("naivebayes")
 
 library(MASS)
 library(pROC)
@@ -10,6 +11,7 @@ library(class)
 library(ggplot2)
 library(corrplot)
 library(tidymodels)
+library(naivebayes)
 
 data.orig <- read.csv("data/heart_data.csv", stringsAsFactors = T)
 
@@ -108,22 +110,6 @@ X.test <- test[, !names(test) %in% c("HeartDisease")]
 
 # Evaluation
 # Simple Logistic Regression
-# For Marco: this is just a test, do as you wish
-
-
-#glm.compl <- glm(data=train, HeartDisease~., family="binomial")
-#s <- summary(glm.compl)
-#r2 <- 1 - (s$deviance/s$null.deviance)
-#1/(1-r2)
-#
-#pred.glm.compl <- predict(glm.compl, test, type="response")
-#pred.glm.compl.05 <- ifelse(pred.glm.compl > 0.6, 1, 0)
-#
-#table(test$HeartDisease, pred.glm.compl.05)
-#mean(pred.glm.compl.05 != test$HeartDisease)
-
-
-### Testing some Logistic Regression with glm
 
 glm.model <- glm(data=train, HeartDisease~., family="binomial")
 glm_summary <- summary(glm.model)
@@ -132,14 +118,14 @@ glm_summary <- summary(glm.model)
 r2 <- 1 - (glm_summary$deviance/glm_summary$null.deviance) # null.deviance: deviance of model with only intercept term.
 1/(1-r2) # odds of success for a particular observation in logistic regression model: probability of success / probability of failure
 
-
+# prediction and conversion to binary
 prediction.glm.model <- predict(glm.model, newdata=test, type="response")
 prediction.glm.model.binary <- ifelse(prediction.glm.model > 0.6, 1, 0)
 
 conf_matrix <- table(test$HeartDisease, prediction.glm.model.binary) #tried also with correlationMatrix from carel package but having problems with levels
 mean(prediction.glm.model.binary != test$HeartDisease) #how many are wrong
 
-accuracy <- mean(diag(conf_matrix)) # proportion of correct predictions
+accuracy <- sum(diag(conf_matrix))/sum(conf_matrix) # proportion of correct predictions
 precision <- conf_matrix[2,2] / sum(conf_matrix[,2]) # true positive rate
 recall <- conf_matrix[2,2] / sum(conf_matrix[2,]) # sensitivity
 
@@ -148,6 +134,22 @@ cat("Precision:", round(precision, 3), "\n")
 cat("Recall:", round(recall, 3), "\n")
 cat("Confusion Matrix:\n")
 print(conf_matrix)
+
+
+### Naive Bayes Classifier
+
+train$HeartDisease <- as.factor(train$HeartDisease)
+
+naivebayes.model <- naive_bayes(HeartDisease~., data=train)
+prediction <- predict(naivebayes.model, train)
+head(cbind(prediction, train))
+
+
+#Error in table(prediction, test$HeartDisease) : 
+#tutti gli argomenti devono avere la medesima lunghezza
+#BUT WHY WOULD THAT BE
+
+naivebayes.conf_matrix <- table(prediction, test$HeartDisease)
 
 # For Marco
 # - wrong function for accuracy
@@ -218,9 +220,19 @@ plot(roc.out, print.auc=TRUE, legacy.axes=TRUE,
 auc(roc.out)
 
 
+
+
+
+
 # KNN
 knn.pred <- knn(X.train[, -c(2, 3, 7, 9, 11)], X.test[, -c(2, 3, 7, 9, 11)],
                 y.train, k=5)
 table(knn.pred, y.test)
+
+
+# TODO
+# - plot values with histogram and boxplot
+# - correlations, pairplot
+
 
 # TODO: for each model write down accuracy, precision, recall
