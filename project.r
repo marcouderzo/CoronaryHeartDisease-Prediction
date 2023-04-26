@@ -139,8 +139,20 @@ st.plot <- ggplot(data, aes(x=ST_Slope, group=HeartDisease,
 
 # QQ plots
 # TODO: what if data doesn't follow normal distribution?
+qqnorm(Age, pch = 1, frame = FALSE)
+qqline(Age, col="steelblue")
+
+qqnorm(RestingBP, pch = 1, frame = FALSE)
+qqline(RestingBP, col="steelblue")
+
 qqnorm(Cholesterol, pch = 1, frame = FALSE)
 qqline(Cholesterol, col="steelblue")
+
+qqnorm(MaxHR, pch = 1, frame = FALSE)
+qqline(MaxHR, col="steelblue")
+
+qqnorm(Oldpeak, pch = 1, frame = FALSE)
+qqline(Oldpeak, col="steelblue")
 
 
 # dealing with missing values
@@ -149,6 +161,7 @@ RestingBP[RestingBP == 0] <- median(RestingBP)
 
 # ANOVA
 # TODO: study meaning of this
+# TODO: chi-square test?
 sex.aov <- aov(HeartDisease ~ Sex)
 summary(sex.aov)
 
@@ -270,6 +283,8 @@ prec <- conf.mat[2,2] / sum(conf.mat[,2])
 rec <- conf.mat[2,2] / sum(conf.mat[2,])
 f1.score <- 2*prec*rec/(prec+rec)
 
+# TODO: check manually thresholds to verify the behaviour of the curve
+# TODO: data taken after prediction -> check dataset
 roc.out <- roc(controls=test$HeartDisease, cases=lda.pred$posterior[,2],
                direction=">")
 plot(roc.out, print.auc=TRUE, legacy.axes=TRUE,
@@ -316,3 +331,4 @@ table(knn.pred, y.test)
 
 # TODO
 # - for each model write down accuracy, precision, recall
+# - create function for accuracy, precision and recall
