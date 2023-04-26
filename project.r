@@ -12,6 +12,7 @@ library(ggplot2)
 library(corrplot)
 library(tidymodels)
 library(naivebayes)
+library(olsrr)
 
 data.orig <- read.csv("data/heart_data.csv", stringsAsFactors = T)
 
@@ -114,6 +115,12 @@ X.test <- test[, !names(test) %in% c("HeartDisease")]
 glm.model <- glm(data=train, HeartDisease~., family="binomial")
 glm_summary <- summary(glm.model)
 
+
+
+
+
+
+
 #calculate odds of success given R-squared value
 r2 <- 1 - (glm_summary$deviance/glm_summary$null.deviance) # null.deviance: deviance of model with only intercept term.
 1/(1-r2) # odds of success for a particular observation in logistic regression model: probability of success / probability of failure
@@ -129,11 +136,123 @@ accuracy <- sum(diag(conf_matrix))/sum(conf_matrix) # proportion of correct pred
 precision <- conf_matrix[2,2] / sum(conf_matrix[,2]) # true positive rate
 recall <- conf_matrix[2,2] / sum(conf_matrix[2,]) # sensitivity
 
-cat("Accuracy:", round(accuracy, 3), "\n")
-cat("Precision:", round(precision, 3), "\n")
-cat("Recall:", round(recall, 3), "\n")
+cat("Accuracy:", round(accuracy, 3), "\n") # Accuracy 0.875
+cat("Precision:", round(precision, 3), "\n") # Precision: 0.9
+cat("Recall:", round(recall, 3), "\n") # Recall: 0.908
 cat("Confusion Matrix:\n")
 print(conf_matrix)
+
+
+# Variable Selection using p-value
+
+
+# Removing Age
+glm.model <- glm(data=train, HeartDisease~. - Age, family="binomial")
+glm_summary <- summary(glm.model)
+summary(glm.model)
+
+#calculate odds of success given R-squared value
+r2 <- 1 - (glm_summary$deviance/glm_summary$null.deviance)
+1/(1-r2)
+
+# prediction and conversion to binary
+prediction.glm.model <- predict(glm.model, newdata=test, type="response")
+prediction.glm.model.binary <- ifelse(prediction.glm.model > 0.6, 1, 0)
+
+conf_matrix <- table(test$HeartDisease, prediction.glm.model.binary)
+mean(prediction.glm.model.binary != test$HeartDisease)
+accuracy <- sum(diag(conf_matrix))/sum(conf_matrix) # proportion of correct predictions
+precision <- conf_matrix[2,2] / sum(conf_matrix[,2]) # true positive rate
+recall <- conf_matrix[2,2] / sum(conf_matrix[2,]) # sensitivity
+
+cat("Accuracy:", round(accuracy, 3), "\n") # Accuracy: 0.88
+cat("Precision:", round(precision, 3), "\n") # Precision: 0.901
+cat("Recall:", round(recall, 3), "\n") # Recall: 0.916
+cat("Confusion Matrix:\n")
+print(conf_matrix)
+
+
+# Removing RestingECG
+glm.model <- glm(data=train, HeartDisease~. - Age - RestingECG, family="binomial")
+glm_summary <- summary(glm.model)
+summary(glm.model)
+
+
+#calculate odds of success given R-squared value
+r2 <- 1 - (glm_summary$deviance/glm_summary$null.deviance)
+1/(1-r2)
+
+# prediction and conversion to binary
+prediction.glm.model <- predict(glm.model, newdata=test, type="response")
+prediction.glm.model.binary <- ifelse(prediction.glm.model > 0.6, 1, 0)
+
+conf_matrix <- table(test$HeartDisease, prediction.glm.model.binary)
+mean(prediction.glm.model.binary != test$HeartDisease)
+accuracy <- sum(diag(conf_matrix))/sum(conf_matrix) # proportion of correct predictions
+precision <- conf_matrix[2,2] / sum(conf_matrix[,2]) # true positive rate
+recall <- conf_matrix[2,2] / sum(conf_matrix[2,]) # sensitivity
+
+cat("Accuracy:", round(accuracy, 3), "\n") # Accuracy: 0.875
+cat("Precision:", round(precision, 3), "\n") # Precision: 0.914
+cat("Recall:", round(recall, 3), "\n") # Recall: 0.916 -> 0.891
+cat("Confusion Matrix:\n")
+print(conf_matrix)
+
+# Removing MaxHR
+glm.model <- glm(data=train, HeartDisease~. - Age - RestingECG - MaxHR, family="binomial")
+glm_summary <- summary(glm.model)
+summary(glm.model)
+
+
+#calculate odds of success given R-squared value
+r2 <- 1 - (glm_summary$deviance/glm_summary$null.deviance)
+1/(1-r2)
+
+# prediction and conversion to binary
+prediction.glm.model <- predict(glm.model, newdata=test, type="response")
+prediction.glm.model.binary <- ifelse(prediction.glm.model > 0.6, 1, 0)
+
+conf_matrix <- table(test$HeartDisease, prediction.glm.model.binary)
+mean(prediction.glm.model.binary != test$HeartDisease)
+accuracy <- sum(diag(conf_matrix))/sum(conf_matrix) # proportion of correct predictions
+precision <- conf_matrix[2,2] / sum(conf_matrix[,2]) # true positive rate
+recall <- conf_matrix[2,2] / sum(conf_matrix[2,]) # sensitivity
+
+cat("Accuracy:", round(accuracy, 3), "\n") # Accuracy: 0.897
+cat("Precision:", round(precision, 3), "\n") # Precision: 0.917
+cat("Recall:", round(recall, 3), "\n") # Recall: 0.916 -> 0.891 -> 0.924
+cat("Confusion Matrix:\n")
+print(conf_matrix)
+
+# Removing RestingBP
+glm.model <- glm(data=train, HeartDisease~. - Age - RestingECG - MaxHR - RestingBP, family="binomial")
+glm_summary <- summary(glm.model)
+summary(glm.model)
+
+
+#calculate odds of success given R-squared value
+r2 <- 1 - (glm_summary$deviance/glm_summary$null.deviance)
+1/(1-r2)
+
+# prediction and conversion to binary
+prediction.glm.model <- predict(glm.model, newdata=test, type="response")
+prediction.glm.model.binary <- ifelse(prediction.glm.model > 0.6, 1, 0)
+
+conf_matrix <- table(test$HeartDisease, prediction.glm.model.binary)
+mean(prediction.glm.model.binary != test$HeartDisease)
+accuracy <- sum(diag(conf_matrix))/sum(conf_matrix) # proportion of correct predictions
+precision <- conf_matrix[2,2] / sum(conf_matrix[,2]) # true positive rate
+recall <- conf_matrix[2,2] / sum(conf_matrix[2,]) # sensitivity
+
+cat("Accuracy:", round(accuracy, 3), "\n") # Accuracy: 0.897
+cat("Precision:", round(precision, 3), "\n") # Precision: 0.917
+cat("Recall:", round(recall, 3), "\n") # Recall: 0.916 -> 0.891 -> 0.924
+cat("Confusion Matrix:\n")
+print(conf_matrix)
+
+
+
+
 
 
 ### Naive Bayes Classifier
@@ -152,7 +271,7 @@ head(cbind(prediction, train))
 naivebayes.conf_matrix <- table(prediction, test$HeartDisease)
 
 # For Marco
-# - wrong function for accuracy
+
 # - variable selection with p-value
 # - logistic regression with Ridge and Lasso regularization
 # - Naive Bayes
