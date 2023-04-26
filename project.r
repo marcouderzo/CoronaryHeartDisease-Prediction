@@ -4,6 +4,7 @@ install.packages("ggplot2")
 install.packages("corrplot")
 install.packages("tidymodels")
 install.packages("naivebayes")
+install.packages("ROCR")
 
 library(MASS)
 library(pROC)
@@ -12,7 +13,7 @@ library(ggplot2)
 library(corrplot)
 library(tidymodels)
 library(naivebayes)
-library(olsrr)
+library(ROCR)
 
 data.orig <- read.csv("data/heart_data.csv", stringsAsFactors = T)
 
@@ -210,7 +211,7 @@ r2 <- 1 - (glm_summary$deviance/glm_summary$null.deviance)
 
 # prediction and conversion to binary
 prediction.glm.model <- predict(glm.model, newdata=test, type="response")
-prediction.glm.model.binary <- ifelse(prediction.glm.model > 0.6, 1, 0)
+prediction.glm.model.binary <- ifelse(prediction.glm.model > 0.4, 1, 0)
 
 conf_matrix <- table(test$HeartDisease, prediction.glm.model.binary)
 mean(prediction.glm.model.binary != test$HeartDisease)
@@ -224,31 +225,46 @@ cat("Recall:", round(recall, 3), "\n") # Recall: 0.916 -> 0.891 -> 0.924
 cat("Confusion Matrix:\n")
 print(conf_matrix)
 
-# Removing RestingBP
-glm.model <- glm(data=train, HeartDisease~. - Age - RestingECG - MaxHR - RestingBP, family="binomial")
-glm_summary <- summary(glm.model)
-summary(glm.model)
+# threshold > 3: accuracy 0.902, precision 0.874, recall 0.992
+# threshold > 4: accuracy 0.913, precision 0.899, recall 0.975 <-
+# threshold > 5: accuracy 0.897, precision 0.897, recall 0.95  <-
+# threshold > 6: accuracy 0.886, precision 0.908, recall 0.916
 
 
-#calculate odds of success given R-squared value
-r2 <- 1 - (glm_summary$deviance/glm_summary$null.deviance)
-1/(1-r2)
+pred <- prediction(prediction.glm.model.binary, test$HeartDisease)
 
-# prediction and conversion to binary
-prediction.glm.model <- predict(glm.model, newdata=test, type="response")
-prediction.glm.model.binary <- ifelse(prediction.glm.model > 0.6, 1, 0)
+perf <- performance(pred, measure = "tpr", x.measure = "fpr")
 
-conf_matrix <- table(test$HeartDisease, prediction.glm.model.binary)
-mean(prediction.glm.model.binary != test$HeartDisease)
-accuracy <- sum(diag(conf_matrix))/sum(conf_matrix) # proportion of correct predictions
-precision <- conf_matrix[2,2] / sum(conf_matrix[,2]) # true positive rate
-recall <- conf_matrix[2,2] / sum(conf_matrix[2,]) # sensitivity
+# Plot the ROC curve
+plot(perf, main="ROC Curve", colorize=T)
 
-cat("Accuracy:", round(accuracy, 3), "\n") # Accuracy: 0.897
-cat("Precision:", round(precision, 3), "\n") # Precision: 0.917
-cat("Recall:", round(recall, 3), "\n") # Recall: 0.916 -> 0.891 -> 0.924
-cat("Confusion Matrix:\n")
-print(conf_matrix)
+
+
+## Removing RestingBP
+#glm.model <- glm(data=train, HeartDisease~. - Age - RestingECG - MaxHR - RestingBP, family="binomial")
+#glm_summary <- summary(glm.model)
+#summary(glm.model)
+#
+#
+##calculate odds of success given R-squared value
+#r2 <- 1 - (glm_summary$deviance/glm_summary$null.deviance)
+#1/(1-r2)
+#
+## prediction and conversion to binary
+#prediction.glm.model <- predict(glm.model, newdata=test, type="response")
+#prediction.glm.model.binary <- ifelse(prediction.glm.model > 0.6, 1, 0)
+#
+#conf_matrix <- table(test$HeartDisease, prediction.glm.model.binary)
+#mean(prediction.glm.model.binary != test$HeartDisease)
+#accuracy <- sum(diag(conf_matrix))/sum(conf_matrix) # proportion of correct predictions
+#precision <- conf_matrix[2,2] / sum(conf_matrix[,2]) # true positive rate
+#recall <- conf_matrix[2,2] / sum(conf_matrix[2,]) # sensitivity
+#
+#cat("Accuracy:", round(accuracy, 3), "\n") # Accuracy: 0.897 -> 0.886
+#cat("Precision:", round(precision, 3), "\n") # Precision: 0.917 -> 0.908
+#cat("Recall:", round(recall, 3), "\n") # Recall: 0.916 -> 0.891 -> 0.924 -> 0.916
+#cat("Confusion Matrix:\n")
+#print(conf_matrix)
 
 
 
