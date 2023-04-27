@@ -1,6 +1,7 @@
 # https://www.kaggle.com/datasets/fedesoriano/heart-failure-prediction
 install.packages("pROC")
 install.packages("ggplot2")
+install.packages("gridExtra")
 install.packages("corrplot")
 install.packages("tidymodels")
 install.packages("naivebayes")
@@ -11,6 +12,7 @@ library(MASS)
 library(pROC)
 library(class)
 library(ggplot2)
+library(gridExtra)
 library(corrplot)
 library(tidymodels)
 library(naivebayes)
@@ -36,55 +38,159 @@ attach(data)
 # data balance check
 prop.table(table(HeartDisease))
 
+# continuous variables
+cont.val <- c("Age", "RestingBP", "Cholesterol", "FastingBS", "MaxHR",
+              "Oldpeak")
+
+# categorical variables
+cat.val <- c("Sex", "ChestPainType", "RestingECG", "ExerciseAngina", "ST_Slope")
+
 # visualizing the data
-# TODO: implement better legend and better graphics
-barplot(table(ChestPainType))
+# continuous variables
+colours <- c("#F8766D", "#00BFC4")
 
-counts <- table(Sex, HeartDisease)
-barplot(counts, beside=T, names.arg=c("Normal", "Heart disease"),
-        legend.text = c("M", "F"))
+# Age
+age.plot.1 <- ggplot(data, aes(x=Age, group=HeartDisease,
+                             fill=factor(HeartDisease))) +
+  geom_density(alpha=0.4) + 
+  ggtitle("Age - Density Plot") + xlab("Age") +
+  guides(fill = guide_legend(title="Heart disease"))
 
-counts <- table(ChestPainType, HeartDisease)
-barplot(counts, beside=T, names.arg=c("Normal", "Heart disease"),
-        legend.text = T)
+age.plot.2 <- ggplot(data, aes(x=Age, group=Sex,
+                               fill=factor(Sex))) +
+  geom_density(alpha=0.4) + 
+  ggtitle("Age - Density Plot") + xlab("Age") +
+  guides(fill = guide_legend(title="Gender"))
 
-boxplot(Age ~ HeartDisease)
-hist(Age)
+# RestingBP
+restingBP.plot <- ggplot(data, aes(x=RestingBP, group=HeartDisease,
+                               fill=factor(HeartDisease))) +
+  geom_density(alpha=0.4) + 
+  ggtitle("RestingBP - Density Plot") + xlab("RestingBP") +
+  guides(fill = guide_legend(title="Heart disease"))
 
-boxplot(RestingBP ~ HeartDisease)
-hist(RestingBP)
+# Cholesterol
+chol.plot <- ggplot(data, aes(x=Cholesterol, group=HeartDisease,
+                                            fill=factor(HeartDisease))) +
+  geom_density(alpha=0.4) + 
+  ggtitle("Cholesterol - Density Plot") + xlab("Cholesterol") +
+  guides(fill = guide_legend(title="Heart disease"))
 
-boxplot(Cholesterol ~ HeartDisease)
-ggplot(data, aes(x = Cholesterol, fill=HeartDisease)) + 
-  geom_density(alpha = 0.4) +
-  facet_grid(~HeartDisease)
+# MaxHR
+maxHR.plot <- ggplot(data, aes(x=MaxHR, group=HeartDisease,
+                               fill=factor(HeartDisease))) +
+  geom_density(alpha=0.4) + 
+  ggtitle("MaxHR - Density Plot") + xlab("MaxHR") +
+  guides(fill = guide_legend(title="Heart disease"))
 
-counts <- table(FastingBS, HeartDisease)
-barplot(counts, beside=T, names.arg=c("Normal", "Heart disease"),
-        legend.text = T)
+# Oldpeak
+oldpeak.plot <- ggplot(data, aes(x=Oldpeak, group=HeartDisease,
+                               fill=factor(HeartDisease))) +
+  geom_density(alpha=0.4) + 
+  ggtitle("Oldpeak - Density Plot") + xlab("Oldpeak") +
+  guides(fill = guide_legend(title="Heart disease"))
 
-counts <- table(RestingECG, HeartDisease)
-barplot(counts, beside=T, names.arg=c("Normal", "Heart disease"),
-        legend.text = T)
+grid.arrange(age.plot.1, age.plot.2, restingBP.plot, chol.plot, maxHR.plot,
+             oldpeak.plot, nrow = 2)
 
-boxplot(MaxHR ~ HeartDisease)
-hist(MaxHR)
+# FastingBS
+fastingBS.plot <- ggplot(data, aes(x=FastingBS, group=HeartDisease,
+                                   fill=factor(HeartDisease))) +
+  geom_bar(alpha=0.5, position="dodge") +
+  guides(fill = guide_legend(title="Heart disease"))
 
-counts <- table(ExerciseAngina, HeartDisease)
-barplot(counts, beside=T, names.arg=c("Normal", "Heart disease"),
-        legend.text = T)
+# Boxplots
+# TODO: should we deal with outliers?
+age.box.1 <- boxplot(Age ~ HeartDisease, col=colours)
+age.box.2 <- boxplot(Age ~ Sex, col=colours)
+restingBP.box <- boxplot(RestingBP ~ HeartDisease, col=colours) # TODO: check outliers?
+chol.box <- boxplot(Cholesterol ~ HeartDisease, col=colours)
+maxHR.box <- boxplot(MaxHR ~ HeartDisease, col=colours)
+oldpeak.box <- boxplot(Oldpeak ~ HeartDisease, col=colours)
 
-boxplot(Oldpeak ~ HeartDisease)
-hist(Oldpeak)
 
-counts <- table(ST_Slope, HeartDisease)
-barplot(counts, beside=T, names.arg=c("Normal", "Heart disease"),
-        legend.text = T)
+# categorical variables
+# Sex
+sex.plot <- ggplot(data, aes(x=Sex, group=HeartDisease,
+                                   fill=factor(HeartDisease))) +
+  geom_bar(alpha=0.5, position="dodge") +
+  guides(fill = guide_legend(title="Heart disease"))
+
+# ChestPainType
+cpt.plot <- ggplot(data, aes(x=ChestPainType, group=HeartDisease,
+                                   fill=factor(HeartDisease))) +
+  geom_bar(alpha=0.5, position="dodge") +
+  guides(fill = guide_legend(title="Heart disease"))
+
+# RestingECG
+restingECG.plot <- ggplot(data, aes(x=RestingECG, group=HeartDisease,
+                                   fill=factor(HeartDisease))) +
+  geom_bar(alpha=0.5, position="dodge") +
+  guides(fill = guide_legend(title="Heart disease"))
+
+# ExerciseAngina
+exAn.plot <- ggplot(data, aes(x=ExerciseAngina, group=HeartDisease,
+                                   fill=factor(HeartDisease))) +
+  geom_bar(alpha=0.5, position="dodge") +
+  guides(fill = guide_legend(title="Heart disease"))
+
+# ST_Slope
+st.plot <- ggplot(data, aes(x=ST_Slope, group=HeartDisease,
+                                   fill=factor(HeartDisease))) +
+  geom_bar(alpha=0.5, position="dodge") +
+  guides(fill = guide_legend(title="Heart disease"))
+
+
+# QQ plots
+# TODO: what if data doesn't follow normal distribution?
+qqnorm(Age, pch = 1, frame = FALSE)
+qqline(Age, col="steelblue")
+
+qqnorm(RestingBP, pch = 1, frame = FALSE)
+qqline(RestingBP, col="steelblue")
+
+qqnorm(Cholesterol, pch = 1, frame = FALSE)
+qqline(Cholesterol, col="steelblue")
+
+qqnorm(MaxHR, pch = 1, frame = FALSE)
+qqline(MaxHR, col="steelblue")
+
+qqnorm(Oldpeak, pch = 1, frame = FALSE)
+qqline(Oldpeak, col="steelblue")
 
 
 # dealing with missing values
 RestingBP[RestingBP == 0] <- median(RestingBP)
 
+
+# ANOVA
+# TODO: study meaning of this
+# TODO: chi-square test?
+sex.aov <- aov(HeartDisease ~ Sex)
+summary(sex.aov)
+
+sex.aov.2 <- aov(Age ~ Sex)
+summary(sex.aov) # TODO: why high p-value?
+
+cpt.aov <- aov(HeartDisease ~ ChestPainType)
+summary(cpt.aov)
+
+restingECG.aov <- aov(HeartDisease ~ RestingECG)
+summary(restingECG.aov)
+
+exAn.aov <- aov(HeartDisease ~ ExerciseAngina)
+summary(exAn.aov)
+
+st.aov <- aov(HeartDisease ~ ST_Slope)
+summary(sex.aov)
+
+# correlations
+cor(Age, HeartDisease)
+cor(RestingBP, HeartDisease)
+cor(Cholesterol, HeartDisease)
+cor(FastingBS, HeartDisease)
+cor(MaxHR, HeartDisease)
+cor(Oldpeak, HeartDisease)
 
 # correlation matrix
 nums <- unlist(lapply(data, is.numeric), use.names = FALSE)
@@ -99,8 +205,8 @@ corrplot(cor.data,
          cl.pos="n")
 
 # Train-Test split
-set.seed(42)
-split <- initial_split(data, prop=0.80)
+set.seed(123)
+split <- initial_split(data, prop=0.75)
 
 train <- training(split)
 test <- testing(split)
@@ -274,15 +380,8 @@ head(cbind(prediction, train))
 
 naivebayes.conf_matrix <- table(prediction, test$HeartDisease)
 
-# For Marco
 
-# - variable selection with p-value
-# - logistic regression with Ridge and Lasso regularization
-# - Naive Bayes
-# - KNN
-
-
-# LDA
+### LDA
 lda.fit <- lda(HeartDisease~., data=train)
 plot(lda.fit, type="density")
 
@@ -307,6 +406,8 @@ prec <- conf.mat[2,2] / sum(conf.mat[,2])
 rec <- conf.mat[2,2] / sum(conf.mat[2,])
 f1.score <- 2*prec*rec/(prec+rec)
 
+# TODO: check manually thresholds to verify the behaviour of the curve
+# TODO: data taken after prediction -> check dataset
 roc.out <- roc(controls=test$HeartDisease, cases=lda.pred$posterior[,2],
                direction=">")
 plot(roc.out, print.auc=TRUE, legacy.axes=TRUE,
@@ -317,9 +418,10 @@ ldahist(lda.pred$x[,1], g=lda.pred$class, col=2)
 
 # TODO: how do I choose the best threshold?
 # TODO: how do I upgrade the model?
+# TODO: strange AUC curve
 
 
-# QDA
+### QDA
 qda.fit <- qda(HeartDisease~., data=train)
 
 qda.pred <- predict(qda.fit, test)
@@ -343,19 +445,13 @@ plot(roc.out, print.auc=TRUE, legacy.axes=TRUE,
 auc(roc.out)
 
 
-
-
-
-
 # KNN
+# TODO: use also categorical variables
 knn.pred <- knn(X.train[, -c(2, 3, 7, 9, 11)], X.test[, -c(2, 3, 7, 9, 11)],
                 y.train, k=5)
 table(knn.pred, y.test)
 
 
 # TODO
-# - plot values with histogram and boxplot
-# - correlations, pairplot
-
-
-# TODO: for each model write down accuracy, precision, recall
+# - for each model write down accuracy, precision, recall
+# - create function for accuracy, precision and recall
