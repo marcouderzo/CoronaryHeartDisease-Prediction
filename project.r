@@ -5,6 +5,7 @@ install.packages("corrplot")
 install.packages("tidymodels")
 install.packages("naivebayes")
 install.packages("ROCR")
+install.packages("glmnet")
 
 library(MASS)
 library(pROC)
@@ -14,6 +15,7 @@ library(corrplot)
 library(tidymodels)
 library(naivebayes)
 library(ROCR)
+library(glmnet)
 
 data.orig <- read.csv("data/heart_data.csv", stringsAsFactors = T)
 
@@ -230,6 +232,8 @@ print(conf_matrix)
 # threshold > 5: accuracy 0.897, precision 0.897, recall 0.95  <-
 # threshold > 6: accuracy 0.886, precision 0.908, recall 0.916
 
+# to do: use update function and separate each model with different names.
+
 
 pred <- prediction(prediction.glm.model.binary, test$HeartDisease)
 
@@ -239,34 +243,18 @@ perf <- performance(pred, measure = "tpr", x.measure = "fpr")
 plot(perf, main="ROC Curve", colorize=T)
 
 
+# Lasso Regression
 
-## Removing RestingBP
-#glm.model <- glm(data=train, HeartDisease~. - Age - RestingECG - MaxHR - RestingBP, family="binomial")
-#glm_summary <- summary(glm.model)
-#summary(glm.model)
-#
-#
-##calculate odds of success given R-squared value
-#r2 <- 1 - (glm_summary$deviance/glm_summary$null.deviance)
-#1/(1-r2)
-#
-## prediction and conversion to binary
-#prediction.glm.model <- predict(glm.model, newdata=test, type="response")
-#prediction.glm.model.binary <- ifelse(prediction.glm.model > 0.6, 1, 0)
-#
-#conf_matrix <- table(test$HeartDisease, prediction.glm.model.binary)
-#mean(prediction.glm.model.binary != test$HeartDisease)
-#accuracy <- sum(diag(conf_matrix))/sum(conf_matrix) # proportion of correct predictions
-#precision <- conf_matrix[2,2] / sum(conf_matrix[,2]) # true positive rate
-#recall <- conf_matrix[2,2] / sum(conf_matrix[2,]) # sensitivity
-#
-#cat("Accuracy:", round(accuracy, 3), "\n") # Accuracy: 0.897 -> 0.886
-#cat("Precision:", round(precision, 3), "\n") # Precision: 0.917 -> 0.908
-#cat("Recall:", round(recall, 3), "\n") # Recall: 0.916 -> 0.891 -> 0.924 -> 0.916
-#cat("Confusion Matrix:\n")
-#print(conf_matrix)
+X <- model.matrix(prediction.glm.model) #design matrix
+y <- prediction.glm.model$HeartDisease #response vector
+
+lasso.model <- cv.glmnet(X, y, family = "binomial", type.measure = "class")
 
 
+lasso.coef <- coef(lasso.model, s = "lambda.min") # Extract the coefficients and non-zero variables
+lasso.vars <- rownames(lasso.coef)[-1][lasso.coef[-1,] != 0]
+
+cat("Selected variables:", paste(lasso.vars, collapse = ", "))
 
 
 
