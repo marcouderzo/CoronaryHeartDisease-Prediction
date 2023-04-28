@@ -379,17 +379,14 @@ coef(fit, s = "lambda.min") # extract the coefficients from the optimal model. o
 ### Naive Bayes Classifier
 
 train$HeartDisease <- as.factor(train$HeartDisease)
+test$HeartDisease <- as.factor(test$HeartDisease)
 
 naivebayes.model <- naive_bayes(HeartDisease~., data=train)
-prediction <- predict(naivebayes.model, train)
-head(cbind(prediction, train))
-
-
-#Error in table(prediction, test$HeartDisease) : 
-#tutti gli argomenti devono avere la medesima lunghezza
-#BUT WHY WOULD THAT BE
+prediction <- predict(naivebayes.model, test)
+head(cbind(prediction, test$HeartDisease))
 
 naivebayes.conf_matrix <- table(prediction, test$HeartDisease)
+naivebayes.conf_matrix
 
 
 ### LDA
