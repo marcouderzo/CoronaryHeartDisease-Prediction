@@ -185,6 +185,8 @@ st.aov <- aov(HeartDisease ~ ST_Slope)
 summary(sex.aov)
 
 # correlations
+# TODO: what if I find correlations between parameters?
+# TODO: correlation matrix for categorical variables?
 cor(Age, HeartDisease)
 cor(RestingBP, HeartDisease)
 cor(Cholesterol, HeartDisease)
@@ -389,6 +391,24 @@ naivebayes.conf_matrix <- table(prediction, test$HeartDisease)
 naivebayes.conf_matrix
 
 
+calculate.metrics <- function(conf.mat) {
+  acc <- sum(diag(conf.mat))/sum(conf.mat)
+  prec <- conf.mat[2,2] / sum(conf.mat[,2])
+  rec <- conf.mat[2,2] / sum(conf.mat[2,])
+  f1.score <- 2*prec*rec/(prec+rec)
+  out <- list(acc, prec, rec, f1.score)
+  return(out)
+}
+
+model.plot.roc <- function(predm, labl) {
+  pred <- prediction(predm, labl)
+  perf <- performance(pred, measure="tpr", x.measure="fpr")
+  plot(perf, main="ROC")
+  abline(a=0, b= 1)
+  auc.perf <- performance(pred, measure = "auc")
+  return(auc.perf@y.values)
+}
+
 ### LDA
 lda.fit <- lda(HeartDisease~., data=train)
 plot(lda.fit, type="density")
@@ -402,20 +422,23 @@ lda.pred.t3 <- as.factor(ifelse(lda.res[,2] > 0.3, 1, 0))
 lda.pred.t4 <- as.factor(ifelse(lda.res[,2] > 0.4, 1, 0))
 lda.pred.t5 <- lda.pred$class
 
-# the best result is when t = 4 if we want to minimize False Positives
-conf.mat <- table(test$HeartDisease, lda.pred.t4)
+lda.pred.best <- as.factor(ifelse(lda.res[,2] > 0.6, 1, 0))
+
+# the best result is when t = 0.6 if we want to minimize False Positives
+conf.mat <- table(test$HeartDisease, lda.pred.best)
 conf.mat
 
 # error rate
-mean(lda.pred.t4!=test$HeartDisease)
+mean(lda.pred.best!=test$HeartDisease)
 
-acc <- sum(diag(conf.mat))/sum(conf.mat)
-prec <- conf.mat[2,2] / sum(conf.mat[,2])
-rec <- conf.mat[2,2] / sum(conf.mat[2,])
-f1.score <- 2*prec*rec/(prec+rec)
+# accuracy, precision, recall, f1 score
+metrics <- calculate.metrics(conf.mat)
 
-# TODO: check manually thresholds to verify the behaviour of the curve
-# TODO: data taken after prediction -> check dataset
+# ROC
+lda.auc <- model.plot.roc(lda.res[,2], test$HeartDisease)
+
+
+# TODO: wrong ROC?
 roc.out <- roc(controls=test$HeartDisease, cases=lda.pred$posterior[,2],
                direction=">")
 plot(roc.out, print.auc=TRUE, legacy.axes=TRUE,
@@ -426,10 +449,11 @@ ldahist(lda.pred$x[,1], g=lda.pred$class, col=2)
 
 # TODO: how do I choose the best threshold?
 # TODO: how do I upgrade the model?
-# TODO: strange AUC curve
+
 
 
 ### QDA
+# TODO: choose best threshold for QDA
 qda.fit <- qda(HeartDisease~., data=train)
 
 qda.pred <- predict(qda.fit, test)
@@ -441,10 +465,9 @@ qda.pred.t6<- as.factor(ifelse(qda.pred$posterior[,2] > 0.6, 1, 0))
 
 conf.mat <- table(qda.pred.t5, test$HeartDisease)
 
-acc <- sum(diag(conf.mat))/sum(conf.mat)
-prec <- conf.mat[2,2] / sum(conf.mat[,2])
-rec <- conf.mat[2,2] / sum(conf.mat[2,])
-f1.score <- 2*prec*rec/(prec+rec)
+metrics <- calculate.metrics(conf.mat)
+
+qda.auc <- model.plot.roc(qda.pred$posterior[,2], test$HeartDisease)
 
 roc.out <- roc(controls=test$HeartDisease, cases=qda.pred$posterior[,2],
                direction=">")
@@ -453,13 +476,5 @@ plot(roc.out, print.auc=TRUE, legacy.axes=TRUE,
 auc(roc.out)
 
 
-# KNN
-# TODO: use also categorical variables
-knn.pred <- knn(X.train[, -c(2, 3, 7, 9, 11)], X.test[, -c(2, 3, 7, 9, 11)],
-                y.train, k=5)
-table(knn.pred, y.test)
-
-
 # TODO
 # - for each model write down accuracy, precision, recall
-# - create function for accuracy, precision and recall
