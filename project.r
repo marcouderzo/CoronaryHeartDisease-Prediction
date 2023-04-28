@@ -351,18 +351,18 @@ plot(perf, main="ROC Curve", colorize=T)
 
 # Lasso Regression
 
-X <- model.matrix(prediction.glm.model) #design matrix
-y <- prediction.glm.model$HeartDisease #response vector
+
+X <- model.matrix(glm.model)
+y <- train$HeartDisease
 
 lasso.model <- cv.glmnet(X, y, family = "binomial", type.measure = "class")
 
-
-lasso.coef <- coef(lasso.model, s = "lambda.min") # Extract the coefficients and non-zero variables
+lasso.coef <- coef(lasso.model, s = "lambda.min")
 lasso.vars <- rownames(lasso.coef)[-1][lasso.coef[-1,] != 0]
 
 cat("Selected variables:", paste(lasso.vars, collapse = ", "))
 
-
+# Selected variables: SexM, ChestPainTypeATA, ChestPainTypeNAP, ChestPainTypeTA, RestingBP, Cholesterol, FastingBS, ExerciseAnginaY, Oldpeak, ST_SlopeFlat, ST_SlopeUp
 
 
 ### Naive Bayes Classifier
