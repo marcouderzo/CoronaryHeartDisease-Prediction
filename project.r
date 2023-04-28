@@ -360,9 +360,20 @@ lasso.model <- cv.glmnet(X, y, family = "binomial", type.measure = "class")
 lasso.coef <- coef(lasso.model, s = "lambda.min")
 lasso.vars <- rownames(lasso.coef)[-1][lasso.coef[-1,] != 0]
 
-cat("Selected variables:", paste(lasso.vars, collapse = ", "))
+cat("Selected variables with Lasso Regression:", paste(lasso.vars, collapse = ", "))
 
 # Selected variables: SexM, ChestPainTypeATA, ChestPainTypeNAP, ChestPainTypeTA, RestingBP, Cholesterol, FastingBS, ExerciseAnginaY, Oldpeak, ST_SlopeFlat, ST_SlopeUp
+
+
+
+# Ridge Regression
+
+fit <- cv.glmnet(X, y, family = "binomial", alpha = 0, type.measure = "deviance") # alpha=0 is ridge regression. deviance to be minimized
+
+coef(fit, s = "lambda.min") # extract the coefficients from the optimal model. optimal value of regularization parameter with s="lambda.min"
+
+#The coefficients represent the effect of each predictor variable on the log odds of 
+#the response variable, after adjusting for the other predictor variables and the regularization penalty.
 
 
 ### Naive Bayes Classifier
