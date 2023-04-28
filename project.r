@@ -220,6 +220,27 @@ y.test <- test$HeartDisease
 X.test <- test[, !names(test) %in% c("HeartDisease")]
 
 
+calculate.metrics <- function(conf.mat) {
+  acc <- sum(diag(conf.mat))/sum(conf.mat)
+  prec <- conf.mat[2,2] / sum(conf.mat[,2])
+  rec <- conf.mat[2,2] / sum(conf.mat[2,])
+  f1.score <- 2*prec*rec/(prec+rec)
+  out <- list(acc, prec, rec, f1.score)
+  return(out)
+}
+
+model.plot.roc <- function(predm, labl) {
+  pred <- prediction(predm, labl)
+  perf <- performance(pred, measure="tpr", x.measure="fpr")
+  plot(perf, main="ROC")
+  abline(a=0, b= 1)
+  auc.perf <- performance(pred, measure = "auc")
+  return(auc.perf@y.values)
+}
+
+
+
+
 # Evaluation
 # Simple Logistic Regression
 
@@ -228,13 +249,10 @@ glm_summary <- summary(glm.model)
 
 
 
-
-
-
-
 #calculate odds of success given R-squared value
 r2 <- 1 - (glm_summary$deviance/glm_summary$null.deviance) # null.deviance: deviance of model with only intercept term.
 1/(1-r2) # odds of success for a particular observation in logistic regression model: probability of success / probability of failure
+
 
 # prediction and conversion to binary
 prediction.glm.model <- predict(glm.model, newdata=test, type="response")
@@ -243,97 +261,33 @@ prediction.glm.model.binary <- ifelse(prediction.glm.model > 0.6, 1, 0)
 conf_matrix <- table(test$HeartDisease, prediction.glm.model.binary) #tried also with correlationMatrix from carel package but having problems with levels
 mean(prediction.glm.model.binary != test$HeartDisease) #how many are wrong
 
-accuracy <- sum(diag(conf_matrix))/sum(conf_matrix) # proportion of correct predictions
-precision <- conf_matrix[2,2] / sum(conf_matrix[,2]) # true positive rate
-recall <- conf_matrix[2,2] / sum(conf_matrix[2,]) # sensitivity
-
-cat("Accuracy:", round(accuracy, 3), "\n") # Accuracy 0.875
-cat("Precision:", round(precision, 3), "\n") # Precision: 0.9
-cat("Recall:", round(recall, 3), "\n") # Recall: 0.908
-cat("Confusion Matrix:\n")
-print(conf_matrix)
+glm.model.metrics <- calculate.metrics(conf_matrix)
 
 
 # Variable Selection using p-value
 
+glm.model.1 <- update(glm.model, ~. - Age)
+glm.model.2 <- update(glm.model.1, ~. - RestingECG)
+glm.model.3 <- update(glm.model.2, ~. - MaxHR)
 
-# Removing Age
-glm.model <- glm(data=train, HeartDisease~. - Age, family="binomial")
-glm_summary <- summary(glm.model)
-summary(glm.model)
-
-#calculate odds of success given R-squared value
-r2 <- 1 - (glm_summary$deviance/glm_summary$null.deviance)
-1/(1-r2)
-
-# prediction and conversion to binary
-prediction.glm.model <- predict(glm.model, newdata=test, type="response")
-prediction.glm.model.binary <- ifelse(prediction.glm.model > 0.6, 1, 0)
-
-conf_matrix <- table(test$HeartDisease, prediction.glm.model.binary)
-mean(prediction.glm.model.binary != test$HeartDisease)
-accuracy <- sum(diag(conf_matrix))/sum(conf_matrix) # proportion of correct predictions
-precision <- conf_matrix[2,2] / sum(conf_matrix[,2]) # true positive rate
-recall <- conf_matrix[2,2] / sum(conf_matrix[2,]) # sensitivity
-
-cat("Accuracy:", round(accuracy, 3), "\n") # Accuracy: 0.88
-cat("Precision:", round(precision, 3), "\n") # Precision: 0.901
-cat("Recall:", round(recall, 3), "\n") # Recall: 0.916
-cat("Confusion Matrix:\n")
-print(conf_matrix)
-
-
-# Removing RestingECG
-glm.model <- glm(data=train, HeartDisease~. - Age - RestingECG, family="binomial")
-glm_summary <- summary(glm.model)
-summary(glm.model)
+glm_summary <- summary(glm.model.3)
+summary(glm.model.3)
 
 
 #calculate odds of success given R-squared value
 r2 <- 1 - (glm_summary$deviance/glm_summary$null.deviance)
 1/(1-r2)
 
-# prediction and conversion to binary
-prediction.glm.model <- predict(glm.model, newdata=test, type="response")
-prediction.glm.model.binary <- ifelse(prediction.glm.model > 0.6, 1, 0)
-
-conf_matrix <- table(test$HeartDisease, prediction.glm.model.binary)
-mean(prediction.glm.model.binary != test$HeartDisease)
-accuracy <- sum(diag(conf_matrix))/sum(conf_matrix) # proportion of correct predictions
-precision <- conf_matrix[2,2] / sum(conf_matrix[,2]) # true positive rate
-recall <- conf_matrix[2,2] / sum(conf_matrix[2,]) # sensitivity
-
-cat("Accuracy:", round(accuracy, 3), "\n") # Accuracy: 0.875
-cat("Precision:", round(precision, 3), "\n") # Precision: 0.914
-cat("Recall:", round(recall, 3), "\n") # Recall: 0.916 -> 0.891
-cat("Confusion Matrix:\n")
-print(conf_matrix)
-
-# Removing MaxHR
-glm.model <- glm(data=train, HeartDisease~. - Age - RestingECG - MaxHR, family="binomial")
-glm_summary <- summary(glm.model)
-summary(glm.model)
-
-
-#calculate odds of success given R-squared value
-r2 <- 1 - (glm_summary$deviance/glm_summary$null.deviance)
-1/(1-r2)
 
 # prediction and conversion to binary
-prediction.glm.model <- predict(glm.model, newdata=test, type="response")
+prediction.glm.model <- predict(glm.model.3, newdata=test, type="response")
 prediction.glm.model.binary <- ifelse(prediction.glm.model > 0.4, 1, 0)
 
 conf_matrix <- table(test$HeartDisease, prediction.glm.model.binary)
-mean(prediction.glm.model.binary != test$HeartDisease)
-accuracy <- sum(diag(conf_matrix))/sum(conf_matrix) # proportion of correct predictions
-precision <- conf_matrix[2,2] / sum(conf_matrix[,2]) # true positive rate
-recall <- conf_matrix[2,2] / sum(conf_matrix[2,]) # sensitivity
+conf_matrix
+glm.model.3.metrics <- calculate.metrics(conf_matrix)
+glm.model.3.metrics
 
-cat("Accuracy:", round(accuracy, 3), "\n") # Accuracy: 0.897
-cat("Precision:", round(precision, 3), "\n") # Precision: 0.917
-cat("Recall:", round(recall, 3), "\n") # Recall: 0.916 -> 0.891 -> 0.924
-cat("Confusion Matrix:\n")
-print(conf_matrix)
 
 # threshold > 3: accuracy 0.902, precision 0.874, recall 0.992
 # threshold > 4: accuracy 0.913, precision 0.899, recall 0.975 <-
@@ -354,7 +308,7 @@ plot(perf, main="ROC Curve", colorize=T)
 # Lasso Regression
 
 
-X <- model.matrix(glm.model)
+X <- model.matrix(glm.model.3)
 y <- train$HeartDisease
 
 lasso.model <- cv.glmnet(X, y, family = "binomial", type.measure = "class")
@@ -369,6 +323,9 @@ cat("Selected variables with Lasso Regression:", paste(lasso.vars, collapse = ",
 
 
 # Ridge Regression
+
+X <- model.matrix(glm.model.3)
+y <- train$HeartDisease
 
 fit <- cv.glmnet(X, y, family = "binomial", alpha = 0, type.measure = "deviance") # alpha=0 is ridge regression. deviance to be minimized
 
@@ -391,23 +348,6 @@ naivebayes.conf_matrix <- table(prediction, test$HeartDisease)
 naivebayes.conf_matrix
 
 
-calculate.metrics <- function(conf.mat) {
-  acc <- sum(diag(conf.mat))/sum(conf.mat)
-  prec <- conf.mat[2,2] / sum(conf.mat[,2])
-  rec <- conf.mat[2,2] / sum(conf.mat[2,])
-  f1.score <- 2*prec*rec/(prec+rec)
-  out <- list(acc, prec, rec, f1.score)
-  return(out)
-}
-
-model.plot.roc <- function(predm, labl) {
-  pred <- prediction(predm, labl)
-  perf <- performance(pred, measure="tpr", x.measure="fpr")
-  plot(perf, main="ROC")
-  abline(a=0, b= 1)
-  auc.perf <- performance(pred, measure = "auc")
-  return(auc.perf@y.values)
-}
 
 ### LDA
 lda.fit <- lda(HeartDisease~., data=train)
