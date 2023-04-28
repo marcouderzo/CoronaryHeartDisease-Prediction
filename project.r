@@ -1,8 +1,11 @@
 # https://www.kaggle.com/datasets/fedesoriano/heart-failure-prediction
 install.packages("pROC")
 install.packages("ggplot2")
+install.packages("ggcorrplot")
 install.packages("gridExtra")
 install.packages("corrplot")
+install.packages("correlation")
+install.packages("ggm")
 install.packages("tidymodels")
 install.packages("naivebayes")
 install.packages("ROCR")
@@ -12,8 +15,12 @@ library(MASS)
 library(pROC)
 library(class)
 library(ggplot2)
+library(ggcorrplot)
 library(gridExtra)
 library(corrplot)
+library(correlation)
+library(ggm)
+library(igraph)
 library(tidymodels)
 library(naivebayes)
 library(ROCR)
@@ -160,7 +167,9 @@ qqline(Oldpeak, col="steelblue")
 
 
 # dealing with missing values
-RestingBP[RestingBP == 0] <- median(RestingBP)
+data$RestingBP[data$RestingBP == 0] <- median(data$RestingBP)
+data$Cholesterol[data$Cholesterol == 0] <- round(rnorm(length(data$Cholesterol[data$Cholesterol == 0]),
+                                                 mean(Cholesterol), sd(Cholesterol)),0)
 
 
 # ANOVA
@@ -186,7 +195,8 @@ summary(sex.aov)
 
 # correlations
 # TODO: what if I find correlations between parameters?
-# TODO: correlation matrix for categorical variables?
+correlation(data, partial=T)
+
 cor(Age, HeartDisease)
 cor(RestingBP, HeartDisease)
 cor(Cholesterol, HeartDisease)
@@ -206,9 +216,32 @@ corrplot(cor.data,
          addCoef.col="grey50",
          cl.pos="n")
 
+model.matrix(~0+., data=data) %>%
+  cor(use="pairwise.complete.obs") %>%
+  ggcorrplot(show.diag=FALSE, lab=T, lab_size=1.5, tl.cex=5)
+
+# removed Oldpeak matrix no more singular
+# TODO: ask the professor for the graph
+S <- var(cor.data[, -c(6)])
+R <- -cov2cor(solve(S))
+G <- abs(R)>0.1
+diag(G) <- 0
+Gi <- as(G, "igraph")
+tkplot(Gi, vertex.color="white")
+
+
+# scaled dataset
+data.scaled <- data.frame(data)
+for (i in c(1,4,5,8,10)) {
+  v <- data.scaled[,i]
+  data.scaled[,i] <- (v-min(v))/(max(v)-min(v))
+}
+
+
 # Train-Test split
 set.seed(123)
 split <- initial_split(data, prop=0.75)
+split.scaled <- initial_split(data.scaled, prop=0.75)
 
 train <- training(split)
 test <- testing(split)
@@ -219,6 +252,8 @@ X.train <- train[, !names(train) %in% c("HeartDisease")]
 y.test <- test$HeartDisease
 X.test <- test[, !names(test) %in% c("HeartDisease")]
 
+train.scaled <- training(split.scaled)
+test.scaled <- testing(split.scaled)
 
 calculate.metrics <- function(conf.mat) {
   acc <- sum(diag(conf.mat))/sum(conf.mat)
@@ -350,6 +385,7 @@ naivebayes.conf_matrix
 
 
 ### LDA
+# NOTE: scaling dataset gets worse results
 lda.fit <- lda(HeartDisease~., data=train)
 plot(lda.fit, type="density")
 
@@ -414,7 +450,3 @@ roc.out <- roc(controls=test$HeartDisease, cases=qda.pred$posterior[,2],
 plot(roc.out, print.auc=TRUE, legacy.axes=TRUE,
      xlab="False positive rate", ylab="True positive rate")
 auc(roc.out)
-
-
-# TODO
-# - for each model write down accuracy, precision, recall
