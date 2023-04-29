@@ -259,9 +259,12 @@ prediction.glm.model <- predict(glm.model, newdata=test, type="response")
 prediction.glm.model.binary <- ifelse(prediction.glm.model > 0.6, 1, 0)
 
 conf_matrix <- table(test$HeartDisease, prediction.glm.model.binary) #tried also with correlationMatrix from carel package but having problems with levels
-mean(prediction.glm.model.binary != test$HeartDisease) #how many are wrong
+#mean(prediction.glm.model.binary != test$HeartDisease) #how many are wrong
 
 glm.model.metrics <- calculate.metrics(conf_matrix)
+
+
+
 
 
 # Variable Selection using p-value
@@ -280,10 +283,10 @@ r2 <- 1 - (glm_summary$deviance/glm_summary$null.deviance)
 
 
 # prediction and conversion to binary
-prediction.glm.model <- predict(glm.model.3, newdata=test, type="response")
-prediction.glm.model.binary <- ifelse(prediction.glm.model > 0.4, 1, 0)
+prediction.glm.model.3 <- predict(glm.model.3, newdata=test, type="response")
+prediction.glm.model.3.binary <- ifelse(prediction.glm.model > 0.4, 1, 0)
 
-conf_matrix <- table(test$HeartDisease, prediction.glm.model.binary)
+conf_matrix <- table(test$HeartDisease, prediction.glm.model.3.binary)
 conf_matrix
 glm.model.3.metrics <- calculate.metrics(conf_matrix)
 glm.model.3.metrics
@@ -294,15 +297,11 @@ glm.model.3.metrics
 # threshold > 5: accuracy 0.897, precision 0.897, recall 0.95  <-
 # threshold > 6: accuracy 0.886, precision 0.908, recall 0.916
 
-# to do: use update function and separate each model with different names.
+
+# Plot ROC Curve
 
 
-pred <- prediction(prediction.glm.model.binary, test$HeartDisease)
-
-perf <- performance(pred, measure = "tpr", x.measure = "fpr")
-
-# Plot the ROC curve
-plot(perf, main="ROC Curve", colorize=T)
+model.plot.roc(prediction.glm.model.3.binary, test$HeartDisease)
 
 
 # Lasso Regression
@@ -341,11 +340,16 @@ train$HeartDisease <- as.factor(train$HeartDisease)
 test$HeartDisease <- as.factor(test$HeartDisease)
 
 naivebayes.model <- naive_bayes(HeartDisease~., data=train)
-prediction <- predict(naivebayes.model, test)
-head(cbind(prediction, test$HeartDisease))
+naivebayes.prediction <- predict(naivebayes.model, test)
+head(cbind(naivebayes.prediction, test$HeartDisease))
 
-naivebayes.conf_matrix <- table(prediction, test$HeartDisease)
+naivebayes.conf_matrix <- table(naivebayes.prediction, test$HeartDisease)
 naivebayes.conf_matrix
+
+naivebayes.metrics <- calculate.metrics(naivebayes.conf_matrix)
+naivebayes.metrics
+
+model.plot.roc(naivebayes.prediction, test$HeartDisease)
 
 
 
