@@ -368,7 +368,7 @@ glm.model.3.metrics
 Let's also plot the ROC Curve for the final model.
 
 ```{r, include=TRUE}
-model.plot.roc(prediction.glm.model.3.binary, test$HeartDisease)
+model.plot.roc(prediction.glm.model.3, test$HeartDisease)
 ```
 
 ### Lasso Regression

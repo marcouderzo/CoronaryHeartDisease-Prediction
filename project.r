@@ -336,7 +336,7 @@ glm.model.3.metrics
 # Plot ROC Curve
 
 
-model.plot.roc(prediction.glm.model.3.binary, test$HeartDisease)
+model.plot.roc(prediction.glm.model.3, test$HeartDisease)
 
 
 # Lasso Regression
@@ -357,6 +357,8 @@ cat("Selected variables with Lasso Regression:", paste(lasso.vars, collapse = ",
 
 
 # Ridge Regression
+
+
 
 X <- model.matrix(glm.model.3)
 y <- train$HeartDisease
