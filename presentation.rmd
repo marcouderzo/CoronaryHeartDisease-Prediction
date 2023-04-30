@@ -1,0 +1,236 @@
+---
+title: "Presentation"
+author: "Francesco Vo & Marco Uderzo"
+date: "2023-04-30"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(warning = FALSE, message = FALSE)
+```
+
+```{r, include=FALSE}
+library(MASS)
+library(pROC)
+library(class)
+library(ggplot2)
+library(ggcorrplot)
+library(gridExtra)
+library(corrplot)
+library(correlation)
+library(ggm)
+library(igraph)
+library(tidymodels)
+library(naivebayes)
+library(ROCR)
+library(glmnet)
+
+data <- read.csv("data/heart_data.csv", stringsAsFactors = T)
+
+attach(data)
+```
+
+## Project goal and dataset description
+https://www.kaggle.com/datasets/fedesoriano/heart-failure-prediction
+
+The dataset consists of medical data from 5 different locations.
+This data informs us of the presence of coronary heart disease.
+
+Our main goal is to predict the presence of this condition given the other parameters in the dataset.
+
+This dataset has a number of 12 parameters and presents us 918 observations.
+
+The parameters are:
+
+1. **Age**: age of the patient [years]
+
+2. **Sex**: sex of the patient [M: male, F: female]
+
+3. **ChestPainType**: chest pain type [TA: typical angina, ATA: atypical angina, NAP: non-anginal pain, ASY: asymptomatic]
+
++ Angina is a type of chest pain caused by reduced blood flow to the heart. Angina is a symptom of coronary heart disease.
+
+4. **RestingBP**: resting blood pressure [mmHg]
+
+5. **Cholesterol**: serum cholesterol [mm/dl]
+
+6. **FastingBS**: fasting blood sugar [1: if FastingBS > 120 mg/dl, 0: otherwise]
+
++ This measures the blood sugar level after an overnight fast.
+
+7. **RestingECG**: resting electrocardiogram results [Normal: normal, ST: having ST-T wave abnormality (T wave inversions and/or ST elevation or depression of > 0.05 mV), LVH: showing probable or definite left ventricular hypertrophy by Estes' criteria]
+
+8. **MaxHR**: maximum heart rate achieved [numeric value between 60 and 202]
+
+9. **ExerciseAngina**: exercise-induced angina [Y: yes, N: no]
+
+10. **Oldpeak**: oldpeak = ST [numeric value between -2.6 and 6.2]
+
++ ST depression refers to a finding on an electrocardiogram, wherein the trace in the ST segment is abnormally low below the baseline.
+Oldpeak measures the depression of the ST slope.
+
+11. **ST_Slope**: the slope of the peak exercise ST segment [Up: upsloping, Flat: flat, Down: downsloping]
+
+12. **HeartDisease**: output class [1: heart disease, 0: normal]
+
+<br>
+
+## Data visualization and cleaning
+In this section we want to visualize our data and clean it. In order to that we have to:
+
+* Visualize the distribution of the target variable
+
+* Visualize the distribution of the predictors
+
+* Deal with missing values
+
+* Deal with outliers
+
+* Find correlations between the parameters
+
+<br>
+
+### Data balance check
+```{r, include=TRUE}
+prop.table(table(HeartDisease))
+```
+
+The dataset is quite balanced.
+
+<br>
+
+### Continuous variables
+Now we plot the continuous variables with respect to the target variable.
+
+```{r, include=FALSE}
+# continuous variables
+colours <- c("#F8766D", "#00BFC4")
+
+# Age
+age.plot.1 <- ggplot(data, aes(x=Age, group=HeartDisease,
+                             fill=factor(HeartDisease))) +
+  geom_density(alpha=0.4) + 
+  ggtitle("Age - Density Plot") + xlab("Age") +
+  guides(fill = guide_legend(title="Heart disease"))
+
+age.plot.2 <- ggplot(data, aes(x=Age, group=Sex,
+                               fill=factor(Sex))) +
+  geom_density(alpha=0.4) + 
+  ggtitle("Age - Density Plot") + xlab("Age") +
+  guides(fill = guide_legend(title="Gender"))
+
+# RestingBP
+restingBP.plot <- ggplot(data, aes(x=RestingBP, group=HeartDisease,
+                               fill=factor(HeartDisease))) +
+  geom_density(alpha=0.4) + 
+  ggtitle("RestingBP - Density Plot") + xlab("RestingBP") +
+  guides(fill = guide_legend(title="Heart disease"))
+
+# Cholesterol
+chol.plot <- ggplot(data, aes(x=Cholesterol, group=HeartDisease,
+                                            fill=factor(HeartDisease))) +
+  geom_density(alpha=0.4) + 
+  ggtitle("Cholesterol - Density Plot") + xlab("Cholesterol") +
+  guides(fill = guide_legend(title="Heart disease"))
+
+# MaxHR
+maxHR.plot <- ggplot(data, aes(x=MaxHR, group=HeartDisease,
+                               fill=factor(HeartDisease))) +
+  geom_density(alpha=0.4) + 
+  ggtitle("MaxHR - Density Plot") + xlab("MaxHR") +
+  guides(fill = guide_legend(title="Heart disease"))
+
+# Oldpeak
+oldpeak.plot <- ggplot(data, aes(x=Oldpeak, group=HeartDisease,
+                               fill=factor(HeartDisease))) +
+  geom_density(alpha=0.4) + 
+  ggtitle("Oldpeak - Density Plot") + xlab("Oldpeak") +
+  guides(fill = guide_legend(title="Heart disease"))
+
+# FastingBS
+fastingBS.plot <- ggplot(data, aes(x=FastingBS, group=HeartDisease,
+                                   fill=factor(HeartDisease))) +
+  geom_bar(alpha=0.5, position="dodge") +
+  guides(fill = guide_legend(title="Heart disease"))
+
+```
+
+```{r, include=TRUE}
+chol.plot
+oldpeak.plot
+fastingBS.plot
+```
+
+```{r, include=TRUE}
+age.box.1 <- boxplot(Age ~ HeartDisease, col=colours)
+restingBP.box <- boxplot(RestingBP ~ HeartDisease, col=colours)
+maxHR.box <- boxplot(MaxHR ~ HeartDisease, col=colours)
+```
+
+<br>
+
+### Categorical variables
+```{r, include=FALSE}
+# Sex
+sex.plot <- ggplot(data, aes(x=Sex, group=HeartDisease,
+                                   fill=factor(HeartDisease))) +
+  geom_bar(alpha=0.5, position="dodge") +
+  guides(fill = guide_legend(title="Heart disease"))
+
+# ChestPainType
+cpt.plot <- ggplot(data, aes(x=ChestPainType, group=HeartDisease,
+                                   fill=factor(HeartDisease))) +
+  geom_bar(alpha=0.5, position="dodge") +
+  guides(fill = guide_legend(title="Heart disease"))
+
+# RestingECG
+restingECG.plot <- ggplot(data, aes(x=RestingECG, group=HeartDisease,
+                                   fill=factor(HeartDisease))) +
+  geom_bar(alpha=0.5, position="dodge") +
+  guides(fill = guide_legend(title="Heart disease"))
+
+# ExerciseAngina
+exAn.plot <- ggplot(data, aes(x=ExerciseAngina, group=HeartDisease,
+                                   fill=factor(HeartDisease))) +
+  geom_bar(alpha=0.5, position="dodge") +
+  guides(fill = guide_legend(title="Heart disease"))
+
+# ST_Slope
+st.plot <- ggplot(data, aes(x=ST_Slope, group=HeartDisease,
+                                   fill=factor(HeartDisease))) +
+  geom_bar(alpha=0.5, position="dodge") +
+  guides(fill = guide_legend(title="Heart disease"))
+
+```
+
+```{r, include=TRUE}
+sex.plot
+cpt.plot
+restingECG.plot
+exAn.plot
+st.plot
+```
+
+### Missing values
+We have seen from the plots that there many variables in Cholesterol that have value equal to 0. We assume that those variables are not plausible and we change them.
+
+Since we don't want to delete data because we don't have many, in this case we replace the missing values with random values that follow a normal distribution with mean and standard deviation equal to that of the data (we don't want to influence too much).
+``` {r, include=TRUE}
+data$Cholesterol[data$Cholesterol == 0] <- round(rnorm(length(data$Cholesterol[data$Cholesterol == 0]),
+                                                 mean(Cholesterol), sd(Cholesterol)),0)
+```
+
+<br>
+
+### Outliers
+We decided not to deal with outliers since we don't have much data and we don't want to influence too much the results of our classifiers.
+
+<br>
+
+### Correlations
+```{r, include=TRUE}
+model.matrix(~0+., data=data) %>%
+  cor(use="pairwise.complete.obs") %>%
+  ggcorrplot(show.diag=FALSE, lab=T, lab_size=1.5, tl.cex=5)
+```
