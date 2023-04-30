@@ -97,14 +97,14 @@ oldpeak.plot <- ggplot(data, aes(x=Oldpeak, group=HeartDisease,
   ggtitle("Oldpeak - Density Plot") + xlab("Oldpeak") +
   guides(fill = guide_legend(title="Heart disease"))
 
-grid.arrange(age.plot.1, age.plot.2, restingBP.plot, chol.plot, maxHR.plot,
-             oldpeak.plot, nrow = 2)
-
 # FastingBS
 fastingBS.plot <- ggplot(data, aes(x=FastingBS, group=HeartDisease,
                                    fill=factor(HeartDisease))) +
   geom_bar(alpha=0.5, position="dodge") +
   guides(fill = guide_legend(title="Heart disease"))
+
+grid.arrange(age.plot.1, age.plot.2, restingBP.plot, chol.plot, maxHR.plot,
+             oldpeak.plot, fastingBS.plot, nrow = 2)
 
 # Boxplots
 # TODO: should we deal with outliers?
@@ -433,17 +433,12 @@ ldahist(lda.pred$x[,1], g=lda.pred$class, col=2)
 
 
 ### QDA
-# TODO: choose best threshold for QDA
 qda.fit <- qda(HeartDisease~., data=train)
 
 qda.pred <- predict(qda.fit, test)
+qda.pred.best <- as.factor(ifelse(lda.res[,2] > 0.5, 1, 0))
 
-qda.pred.t3<- as.factor(ifelse(qda.pred$posterior[,2] > 0.3, 1, 0))
-qda.pred.t4<- as.factor(ifelse(qda.pred$posterior[,2] > 0.4, 1, 0))
-qda.pred.t5<- as.factor(ifelse(qda.pred$posterior[,2] > 0.5, 1, 0))
-qda.pred.t6<- as.factor(ifelse(qda.pred$posterior[,2] > 0.6, 1, 0))
-
-conf.mat <- table(qda.pred.t5, test$HeartDisease)
+conf.mat <- table(qda.pred.best, test$HeartDisease)
 
 metrics <- calculate.metrics(conf.mat)
 
