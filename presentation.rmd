@@ -233,4 +233,182 @@ We decided not to deal with outliers since we don't have much data and we don't 
 model.matrix(~0+., data=data) %>%
   cor(use="pairwise.complete.obs") %>%
   ggcorrplot(show.diag=FALSE, lab=T, lab_size=1.5, tl.cex=5)
+
+
+
 ```
+
+
+### Data Preparation (?)
+
+```{r, include=TRUE}
+
+data.scaled <- data.frame(data)
+for (i in c(1,4,5,8,10)) {
+  v <- data.scaled[,i]
+  data.scaled[,i] <- (v-min(v))/(max(v)-min(v))
+}
+
+
+set.seed(123)
+split <- initial_split(data, prop=0.75)
+split.scaled <- initial_split(data.scaled, prop=0.75)
+
+train <- training(split)
+test <- testing(split)
+
+y.train <- train$HeartDisease
+X.train <- train[, !names(train) %in% c("HeartDisease")]
+
+y.test <- test$HeartDisease
+X.test <- test[, !names(test) %in% c("HeartDisease")]
+
+train.scaled <- training(split.scaled)
+test.scaled <- testing(split.scaled)
+
+calculate.metrics <- function(conf.mat) {
+  acc <- sum(diag(conf.mat))/sum(conf.mat)
+  prec <- conf.mat[2,2] / sum(conf.mat[,2])
+  rec <- conf.mat[2,2] / sum(conf.mat[2,])
+  f1.score <- 2*prec*rec/(prec+rec)
+  out <- list(acc, prec, rec, f1.score)
+  return(out)
+}
+
+model.plot.roc <- function(predm, labl) {
+  pred <- prediction(predm, labl)
+  perf <- performance(pred, measure="tpr", x.measure="fpr")
+  plot(perf, main="ROC")
+  abline(a=0, b= 1)
+  auc.perf <- performance(pred, measure = "auc")
+  return(auc.perf@y.values)
+}
+
+```
+
+
+## Evaluation
+
+We chose to try different classification models, like Logistic Regression and Naive Bayes. For the former, we also used Lasso Regression and Ridge Regression.
+
+### Simple Logistic Regression
+
+```{r, include=TRUE}
+glm.model <- glm(data=train, HeartDisease~., family="binomial")
+glm_summary <- summary(glm.model)
+glm_summary
+```
+
+
+We calculate the odds of success given R-squared value, so that we evaluate the model error.
+
+```{r, include=TRUE}
+
+r2 <- 1 - (glm_summary$deviance/glm_summary$null.deviance)
+1/(1-r2)
+```
+
+We run the model on the test data, with an initial threshold value of 0.6, to be tuned later through Variable Selection
+
+
+```{r, include=TRUE}
+prediction.glm.model <- predict(glm.model, newdata=test, type="response")
+prediction.glm.model.binary <- ifelse(prediction.glm.model > 0.6, 1, 0)
+
+conf_matrix <- table(test$HeartDisease, prediction.glm.model.binary)
+glm.model.metrics <- calculate.metrics(conf_matrix)
+glm.model.metrics
+```
+
+
+### Variable Selection using p-value
+
+
+We found out that Age, RestingECG and MaxHR are not good enough predictors, having a p-value >= 0.05. We thus only kept predictors with a p-value < 0.05. 
+
+```{r, include=TRUE}
+glm.model.1 <- update(glm.model, ~. - Age)
+glm.model.2 <- update(glm.model.1, ~. - RestingECG)
+glm.model.3 <- update(glm.model.2, ~. - MaxHR)
+
+glm_summary <- summary(glm.model.3)
+summary(glm.model.3)
+```
+
+
+Checking the model error, we noticed that the performance is now better.
+
+```{r, include=TRUE}
+r2 <- 1 - (glm_summary$deviance/glm_summary$null.deviance)
+1/(1-r2)
+```
+
+### Threshold Selection
+
+We tried different thresholds and we noticed that the best ones are 4 and 5, depending on whether to optimize for accuracy or recall.
+
+* threshold > 3: accuracy 0.902, precision 0.874, recall 0.992
+* threshold > 4: accuracy 0.913, precision 0.899, recall 0.975 
+* threshold > 5: accuracy 0.897, precision 0.897, recall 0.95  
+* threshold > 6: accuracy 0.886, precision 0.908, recall 0.916
+
+
+```{r, include=TRUE}
+
+prediction.glm.model.3 <- predict(glm.model.3, newdata=test, type="response")
+prediction.glm.model.3.binary <- ifelse(prediction.glm.model > 0.4, 1, 0)
+
+conf_matrix <- table(test$HeartDisease, prediction.glm.model.3.binary)
+conf_matrix
+glm.model.3.metrics <- calculate.metrics(conf_matrix)
+glm.model.3.metrics
+
+```
+
+Let's also plot the ROC Curve for the final model.
+
+```{r, include=TRUE}
+model.plot.roc(prediction.glm.model.3.binary, test$HeartDisease)
+```
+
+### Lasso Regression
+
+Lasso Regression is now considered in order to better select a subset of the variables.
+
+```{r, include=TRUE}
+X <- model.matrix(glm.model.3)
+y <- train$HeartDisease
+
+lasso.model <- cv.glmnet(X, y, family = "binomial", type.measure = "class")
+
+lasso.coef <- coef(lasso.model, s = "lambda.min")
+lasso.vars <- rownames(lasso.coef)[-1][lasso.coef[-1,] != 0]
+```
+
+```{r, include=TRUE}
+cat("Selected variables with Lasso Regression:", paste(lasso.vars, collapse = ", "))
+```
+
+
+### Ridge Regression
+
+Ridge Regression is performed in order to check the coefficient estimates, that represent the expected change in the response variable for a one-unit increase in each predictor, holding all other predictors constant.
+
+-> Explain the findings.
+
+```{r, include=TRUE}
+
+X <- model.matrix(glm.model.3)
+y <- train$HeartDisease
+
+fit <- cv.glmnet(X, y, family = "binomial", alpha = 0, type.measure = "deviance")
+
+coef(fit, s = "lambda.min")
+```
+
+
+### Naive Bayes Classifier
+
+One other model we tried is the Naive Bayes Classifier.
+
+(Qualcosa non va con il render della presentazione:  format of predictions is invalid. it couldn't be coerced to a list)

@@ -368,6 +368,10 @@ coef(fit, s = "lambda.min") # extract the coefficients from the optimal model. o
 #The coefficients represent the effect of each predictor variable on the log odds of 
 #the response variable, after adjusting for the other predictor variables and the regularization penalty.
 
+#Ridge regression is a model tuning method that is used to analyse any data that suffers from multicollinearity. 
+#This method performs L2 regularization. When the issue of multicollinearity occurs, least-squares are unbiased, 
+#and variances are large, this results in predicted values being far away from the actual values.
+
 
 ### Naive Bayes Classifier
 
