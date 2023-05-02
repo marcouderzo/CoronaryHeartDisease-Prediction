@@ -240,31 +240,15 @@ model.matrix(~0+., data=data) %>%
 
 
 ### Data Preparation
+We divide our data in the training set and the test set. The training set is used to train the model, the test test is used to calculate the accuracy of the model.
 
-```{r, include=FALSE}
-
-data.scaled <- data.frame(data)
-for (i in c(1,4,5,8,10)) {
-  v <- data.scaled[,i]
-  data.scaled[,i] <- (v-min(v))/(max(v)-min(v))
-}
-
-
+```{r, include=TRUE}
 set.seed(123)
 split <- initial_split(data, prop=0.75)
-split.scaled <- initial_split(data.scaled, prop=0.75)
 
 train <- training(split)
 test <- testing(split)
 
-y.train <- train$HeartDisease
-X.train <- train[, !names(train) %in% c("HeartDisease")]
-
-y.test <- test$HeartDisease
-X.test <- test[, !names(test) %in% c("HeartDisease")]
-
-train.scaled <- training(split.scaled)
-test.scaled <- testing(split.scaled)
 
 calculate.metrics <- function(conf.mat) {
   acc <- sum(diag(conf.mat))/sum(conf.mat)
