@@ -239,9 +239,9 @@ model.matrix(~0+., data=data) %>%
 ```
 
 
-### Data Preparation (?)
+### Data Preparation
 
-```{r, include=TRUE}
+```{r, include=FALSE}
 
 data.scaled <- data.frame(data)
 for (i in c(1,4,5,8,10)) {
@@ -289,9 +289,12 @@ model.plot.roc <- function(predm, labl) {
 
 ## Evaluation
 
-We chose to try different classification models, like Logistic Regression and Naive Bayes. For the former, we also used Lasso Regression and Ridge Regression.
+We chose to try different classification models, like Logistic Regression and Naive Bayes. For the former, we also used Lasso Regression and Ridge Regression. The goal is to predict whether or not heart disease is present in the patient.
 
 ### Simple Logistic Regression
+
+Logistic Regression is the easiest and most common model to perform binary classification. The family set is binomial, as the dependent variable is binary.
+
 
 ```{r, include=TRUE}
 glm.model <- glm(data=train, HeartDisease~., family="binomial")
@@ -300,7 +303,8 @@ glm_summary
 ```
 
 
-We calculate the odds of success given R-squared value, so that we evaluate the model error.
+
+We calculate the odds of success given the R-squared value, so that we evaluate the model error. R-squared is the percentage of the dependent variable variation that a linear model explains. 0% represents a model that does not explain any of the variation in the response variable around its mean. The mean of the dependent variable predicts the dependent variable as well as the regression model.
 
 ```{r, include=TRUE}
 
@@ -323,6 +327,13 @@ glm.model.metrics
 
 ### Variable Selection using p-value
 
+All statistical tests have a null hypothesis. For most tests, the null hypothesis is that there is no relationship between your variables of interest or that there is no difference among groups.
+The p value, or probability value, tells you how likely it is that your data could have occurred under the null hypothesis. It does this by calculating the likelihood of your test statistic, which is the number calculated by a statistical test using your data.
+
+The p value tells you how often you would expect to see a test statistic as extreme or more extreme than the one calculated by your statistical test if the null hypothesis of that test was true. The p value gets smaller as the test statistic calculated from your data gets further away from the range of test statistics predicted by the null hypothesis.
+
+The p value is a proportion: if your p value is 0.05, that means that 5% of the time you would see a test statistic at least as extreme as the one you found if the null hypothesis was true.
+
 
 We found out that Age, RestingECG and MaxHR are not good enough predictors, having a p-value >= 0.05. We thus only kept predictors with a p-value < 0.05. 
 
@@ -330,13 +341,17 @@ We found out that Age, RestingECG and MaxHR are not good enough predictors, havi
 glm.model.1 <- update(glm.model, ~. - Age)
 glm.model.2 <- update(glm.model.1, ~. - RestingECG)
 glm.model.3 <- update(glm.model.2, ~. - MaxHR)
+glm.model.4 <- update(glm.model.3, ~. - RestingBP)
+glm.model.5 <- update(glm.model.4, ~. - Cholesterol)
+#glm.model.6 <- update(glm.model.5, ~. - ST_SlopeUp)
 
-glm_summary <- summary(glm.model.3)
-summary(glm.model.3)
+
+glm_summary <- summary(glm.model.5)
+summary(glm.model.5)
 ```
 
 
-Checking the model error, we noticed that the performance is now better.
+Checking the model error, we noticed that the performance is now improved compared to the original model without variable selection.
 
 ```{r, include=TRUE}
 r2 <- 1 - (glm_summary$deviance/glm_summary$null.deviance)
@@ -345,33 +360,39 @@ r2 <- 1 - (glm_summary$deviance/glm_summary$null.deviance)
 
 ### Threshold Selection
 
-We tried different thresholds and we noticed that the best ones are 4 and 5, depending on whether to optimize for accuracy or recall.
+We tried different thresholds and we noticed that the best ones are 0.4 and 0.5, depending on whether to optimize for accuracy or recall.
 
-* threshold > 3: accuracy 0.902, precision 0.874, recall 0.992
-* threshold > 4: accuracy 0.913, precision 0.899, recall 0.975 
-* threshold > 5: accuracy 0.897, precision 0.897, recall 0.95  
-* threshold > 6: accuracy 0.886, precision 0.908, recall 0.916
-
+.
 
 ```{r, include=TRUE}
 
-prediction.glm.model.3 <- predict(glm.model.3, newdata=test, type="response")
-prediction.glm.model.3.binary <- ifelse(prediction.glm.model > 0.4, 1, 0)
+thresholds = c(0.3, 0.4, 0.5, 0.6)
 
-conf_matrix <- table(test$HeartDisease, prediction.glm.model.3.binary)
-conf_matrix
-glm.model.3.metrics <- calculate.metrics(conf_matrix)
-glm.model.3.metrics
+for (thr in thresholds) {
 
+  prediction.glm.model.5 <- predict(glm.model.5, newdata=test, type="response")
+  prediction.glm.model.5.binary <- ifelse(prediction.glm.model > thr, 1, 0)
+  
+  conf_matrix <- table(test$HeartDisease, prediction.glm.model.5.binary)
+  conf_matrix
+  glm.model.5.metrics <- calculate.metrics(conf_matrix)
+  
+  cat("Threshold: ", thr, " -> ")
+  cat("Accuracy, Precision, Rec, F1-Score", paste(glm.model.5.metrics, collapse = ", "))
+}
 ```
 
 Let's also plot the ROC Curve for the final model.
 
 ```{r, include=TRUE}
-model.plot.roc(prediction.glm.model.3, test$HeartDisease)
+model.plot.roc(prediction.glm.model.5, test$HeartDisease)
 ```
 
 ### Lasso Regression
+
+Lasso regression is a regularization technique. It is used over regression methods for a more accurate prediction. This model uses shrinkage. Shrinkage is where data values are shrunk towards a central point as the mean. The lasso procedure encourages simple, sparse models (i.e. models with fewer parameters). This particular type of regression is well-suited for models showing high levels of multicollinearity or when you want to automate certain parts of model selection, like variable selection/parameter elimination.
+
+Lasso Regression uses L1 regularization technique. It is used when we have more features because it automatically performs feature selection.
 
 Lasso Regression is now considered in order to better select a subset of the variables.
 
@@ -392,7 +413,16 @@ cat("Selected variables with Lasso Regression:", paste(lasso.vars, collapse = ",
 
 ### Ridge Regression
 
+
+
+Ridge regression is a model tuning method that is used to analyse any data that suffers from multicollinearity. 
+This method performs L2 regularization. When the issue of multicollinearity occurs, least-squares are unbiased, 
+and variances are large, this results in predicted values being far away from the actual values.
+
 Ridge Regression is performed in order to check the coefficient estimates, that represent the expected change in the response variable for a one-unit increase in each predictor, holding all other predictors constant.
+
+The coefficients represent the effect of each predictor variable on the log odds of 
+the response variable, after adjusting for the other predictor variables and the regularization penalty.
 
 -> Explain the findings.
 
@@ -405,6 +435,7 @@ fit <- cv.glmnet(X, y, family = "binomial", alpha = 0, type.measure = "deviance"
 
 coef(fit, s = "lambda.min")
 ```
+
 
 
 ### Naive Bayes Classifier
