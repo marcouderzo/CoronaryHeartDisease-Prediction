@@ -394,8 +394,6 @@ Lasso regression is a regularization technique. It is used over regression metho
 
 Lasso Regression uses L1 regularization technique. It is used when we have more features because it automatically performs feature selection.
 
-Lasso Regression is now considered in order to better select a subset of the variables.
-
 ```{r, include=TRUE}
 X <- model.matrix(glm.model.3)
 y <- train$HeartDisease
@@ -421,10 +419,11 @@ and variances are large, this results in predicted values being far away from th
 
 Ridge Regression is performed in order to check the coefficient estimates, that represent the expected change in the response variable for a one-unit increase in each predictor, holding all other predictors constant.
 
-The coefficients represent the effect of each predictor variable on the log odds of 
-the response variable, after adjusting for the other predictor variables and the regularization penalty.
+The coefficient estimates represent the expected change in the response variable for a one-unit increase in each predictor, holding all others predictors constant. 
 
--> Explain the findings.
+The negative signs on some of the coefficients indicate that an increase in the corresponding predictor is associated with a decrease in the response variable, while positive signs indicate an increase in the predictor is associated with an increase in the response variable.
+
+
 
 ```{r, include=TRUE}
 
@@ -436,10 +435,32 @@ fit <- cv.glmnet(X, y, family = "binomial", alpha = 0, type.measure = "deviance"
 coef(fit, s = "lambda.min")
 ```
 
+Let's now analyze the findings:
 
+* SexM: 1.2119 means that on average, individuals who are males have a 1.2119 unit increase in the response variable compared to individuals who are female, after controlling for the effects of the other predictors.
 
 ### Naive Bayes Classifier
 
-One other model we tried is the Naive Bayes Classifier.
+One other model we tried is the Naive Bayes Classifier. It is a classification technique based on Bayes’ Theorem with an independence assumption among predictors. In simple terms, a Naive Bayes classifier assumes that the presence of a particular feature in a class is unrelated to the presence of any other feature.
 
-(Qualcosa non va con il render della presentazione:  format of predictions is invalid. it couldn't be coerced to a list)
+
+
+```{r, include=TRUE}
+train$HeartDisease <- as.factor(train$HeartDisease)
+test$HeartDisease <- as.factor(test$HeartDisease)
+
+naivebayes.model <- naive_bayes(HeartDisease~., data=train)
+naivebayes.prediction <- predict(naivebayes.model, test)
+head(cbind(naivebayes.prediction, test$HeartDisease))
+
+naivebayes.conf_matrix <- table(naivebayes.prediction, test$HeartDisease)
+naivebayes.conf_matrix
+
+naivebayes.metrics <- calculate.metrics(naivebayes.conf_matrix)
+naivebayes.metrics
+
+naivebayes.probabilities <- attr(naivebayes.prediction, "probabilities")[, "Yes"]
+#model.plot.roc(naivebayes.probabilities, test$HeartDisease) this triggers the error
+
+```
+

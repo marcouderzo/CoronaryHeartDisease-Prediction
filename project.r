@@ -390,7 +390,11 @@ naivebayes.conf_matrix
 naivebayes.metrics <- calculate.metrics(naivebayes.conf_matrix)
 naivebayes.metrics
 
-model.plot.roc(naivebayes.prediction, test$HeartDisease)
+naivebayes.probabilities <- attr(naivebayes.prediction, "probabilities")[, "Yes"]
+
+
+
+model.plot.roc(naivebayes.probabilities, test$HeartDisease)
 
 
 
