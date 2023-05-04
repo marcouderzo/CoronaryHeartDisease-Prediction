@@ -194,19 +194,9 @@ st.aov <- aov(HeartDisease ~ ST_Slope)
 summary(sex.aov)
 
 # correlations
-# TODO: what if I find correlations between parameters?
-correlation(data, partial=T)
-
-cor(Age, HeartDisease)
-cor(RestingBP, HeartDisease)
-cor(Cholesterol, HeartDisease)
-cor(FastingBS, HeartDisease)
-cor(MaxHR, HeartDisease)
-cor(Oldpeak, HeartDisease)
-
 # correlation matrix
-nums <- unlist(lapply(data, is.numeric), use.names = FALSE)
-cor.data <- cor(data[, nums])
+nums <- c(1,4,5,8,10)
+cor.data <- cor(data[,nums])
 corrplot(cor.data,
          method="color",
          diag=F,
@@ -216,13 +206,9 @@ corrplot(cor.data,
          addCoef.col="grey50",
          cl.pos="n")
 
-model.matrix(~0+., data=data) %>%
-  cor(use="pairwise.complete.obs") %>%
-  ggcorrplot(show.diag=FALSE, lab=T, lab_size=1.5, tl.cex=5)
 
-# removed Oldpeak matrix no more singular
-# TODO: ask the professor for the graph
-S <- var(cor.data[, -c(6)])
+# igraph
+S <- var(data[,nums])
 R <- -cov2cor(solve(S))
 G <- abs(R)>0.1
 diag(G) <- 0
@@ -230,18 +216,9 @@ Gi <- as(G, "igraph")
 tkplot(Gi, vertex.color="white")
 
 
-# scaled dataset
-data.scaled <- data.frame(data)
-for (i in c(1,4,5,8,10)) {
-  v <- data.scaled[,i]
-  data.scaled[,i] <- (v-min(v))/(max(v)-min(v))
-}
-
-
 # Train-Test split
 set.seed(123)
 split <- initial_split(data, prop=0.75)
-split.scaled <- initial_split(data.scaled, prop=0.75)
 
 train <- training(split)
 test <- testing(split)
@@ -252,8 +229,6 @@ X.train <- train[, !names(train) %in% c("HeartDisease")]
 y.test <- test$HeartDisease
 X.test <- test[, !names(test) %in% c("HeartDisease")]
 
-train.scaled <- training(split.scaled)
-test.scaled <- testing(split.scaled)
 
 calculate.metrics <- function(conf.mat) {
   acc <- sum(diag(conf.mat))/sum(conf.mat)
