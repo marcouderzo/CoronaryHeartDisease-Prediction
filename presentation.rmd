@@ -327,20 +327,41 @@ glm.model.2 <- update(glm.model.1, ~. - RestingECG)
 glm.model.3 <- update(glm.model.2, ~. - MaxHR)
 glm.model.4 <- update(glm.model.3, ~. - RestingBP)
 glm.model.5 <- update(glm.model.4, ~. - Cholesterol)
-#glm.model.6 <- update(glm.model.5, ~. - ST_SlopeUp)
+
 
 
 glm_summary <- summary(glm.model.5)
 summary(glm.model.5)
 ```
 
+Let's now compute the R-squared and the Variance Inflation Factor (VIF) for each model
 
-Checking the model error, we noticed that the performance is now improved compared to the original model without variable selection.
+R-squared is a measure of how much variance in the dependent variable is explained by the independent variables in the model. The VIF, on the other hand, is a measure of how much the variance of the estimated regression coefficient for a given independent variable is inflated due to multicollinearity.
+
+A VIF value of 1 indicates no multicollinearity, while values greater than 1 suggest increasing levels of multicollinearity, with higher values indicating more severe multicollinearity.
 
 ```{r, include=TRUE}
-r2 <- 1 - (glm_summary$deviance/glm_summary$null.deviance)
-1/(1-r2)
+
+
+glm.models = list(glm.model, glm.model.1, glm.model.2, glm.model.3, glm.model.4, glm.model.5)
+
+for (mdl in glm.models){
+
+  glm_summary <- summary(mdl)
+  r2 <- 1 - (glm_summary$deviance/glm_summary$null.deviance)
+  cat("R-Squared: ", r2, "\n")
+  vif <- 1/(1-r2)
+  cat("VIF: ", vif, "\n")
+}
+
+
+
+
 ```
+
+
+In all of the models above
+
 
 ### Threshold Selection
 
