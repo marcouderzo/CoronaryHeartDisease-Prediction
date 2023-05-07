@@ -16,7 +16,6 @@ library(ggplot2)
 library(gridExtra)
 library(corrplot)
 library(ggm)
-library(igraph)
 library(tidymodels)
 library(naivebayes)
 library(ROCR)
@@ -45,17 +44,11 @@ cont.idx <- c(1,4,5,8,10)
 colours <- c("#F8766D", "#00BFC4")
 
 # Age
-age.plot.1 <- ggplot(data, aes(x=Age, group=HeartDisease,
+age.plot <- ggplot(data, aes(x=Age, group=HeartDisease,
                              fill=factor(HeartDisease))) +
   geom_density(alpha=0.4) + 
   ggtitle("Age - Density Plot") + xlab("Age") +
   guides(fill = guide_legend(title="Heart disease"))
-
-age.plot.2 <- ggplot(data, aes(x=Age, group=Sex,
-                               fill=factor(Sex))) +
-  geom_density(alpha=0.4) + 
-  ggtitle("Age - Density Plot") + xlab("Age") +
-  guides(fill = guide_legend(title="Gender"))
 
 # RestingBP
 restingBP.plot <- ggplot(data, aes(x=RestingBP, group=HeartDisease,
@@ -140,10 +133,53 @@ st.plot <- ggplot(data, aes(x=ST_Slope, group=HeartDisease,
 # TODO: why most values with 0 Chol have 1 HD?
 head(data[Cholesterol == 0,])
 
-data$Cholesterol[data$Cholesterol == 0] <- median(Cholesterol)
+ch <- Cholesterol[Cholesterol != 0]
+hd <- data[Cholesterol != 0, "HeartDisease"]
+aov(hd ~ ch)
+
+# point-biserial correlation
+cor.test(HeartDisease, Cholesterol) # negative correlation
+cor.test(hd, ch) # positive correlation
+
+
+data$Cholesterol[data$Cholesterol == 0] <- median(data$Cholesterol)
+
+data$RestingBP[data$RestingBP == 0] <- median(data$RestingBP)
+
 attach(data)
 
+# outliers
+# Age -> no outliers
+# RestingBP -> the values even if they are high they are plausible
+# Cholesterol -> many missing values, too high outliers, no correlation
+# serum mean total chol not useful information
+
+# MaxHR -> no outliers
+# Oldpeak -> values follow the range, there are many values with 0
+
+
 # correlations
+
+# chi-squared test
+sex.t <- table(HeartDisease, Sex)
+chisq.test(sex.t)
+
+cpt.t <- table(HeartDisease, ChestPainType)
+chisq.test(cpt.t)
+
+fbs.t <- table(HeartDisease, FastingBS)
+chisq.test(fbs.t)
+
+recg.t <- table(HeartDisease, RestingECG)
+chisq.test(recg.t)
+
+exan.t <- table(HeartDisease, ExerciseAngina)
+chisq.test(exan.t)
+
+st.t <- table(HeartDisease, ST_Slope)
+chisq.test(st.t)
+
+# correlation matrix
 cor.data <- cor(data[,cont.idx])
 corrplot(cor.data,
          method="color",
@@ -166,7 +202,7 @@ diag(G) <- 0
 
 # Train-Test split
 set.seed(123)
-split <- initial_split(data, prop=0.75)
+split <- initial_split(data[,-c(5)], prop=0.75) # removed Cholesterol
 
 train <- training(split)
 test <- testing(split)
@@ -327,14 +363,15 @@ lda.res <- lda.pred$posterior
 lda.pred.best <- as.factor(ifelse(lda.res[,2] > 0.6, 1, 0))
 
 # the best result is when t = 0.6 if we want to minimize False Positives
-conf.mat <- table(test$HeartDisease, lda.pred.best)
-conf.mat
+lda.conf.mat <- table(test$HeartDisease, lda.pred.best)
+lda.conf.mat
 
 # error rate
 mean(lda.pred.best!=test$HeartDisease)
 
 # accuracy, precision, recall, f1 score
-metrics <- calculate.metrics(conf.mat)
+lda.metrics <- calculate.metrics(conf.mat)
+lda.metrics
 
 # ROC
 lda.auc <- model.plot.roc(lda.res[,2], test$HeartDisease)
@@ -349,8 +386,10 @@ qda.fit <- qda(HeartDisease~., data=train)
 qda.pred <- predict(qda.fit, test)
 qda.pred.best <- as.factor(ifelse(lda.res[,2] > 0.5, 1, 0))
 
-conf.mat <- table(qda.pred.best, test$HeartDisease)
+qda.conf.mat <- table(qda.pred.best, test$HeartDisease)
+qda.conf.mat
 
-metrics <- calculate.metrics(conf.mat)
+qda.metrics <- calculate.metrics(conf.mat)
+qda.metrics
 
 qda.auc <- model.plot.roc(qda.pred$posterior[,2], test$HeartDisease)
