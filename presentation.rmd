@@ -34,7 +34,7 @@ attach(data)
 ## Project goal and dataset description
 https://www.kaggle.com/datasets/fedesoriano/heart-failure-prediction
 
-The dataset consists of medical data from 5 different locations.
+The dataset consists of medical data from 5 different hospitals.
 This data informs us of the presence of coronary heart disease.
 
 Our main goal is to predict the presence of this condition given the other parameters in the dataset.
@@ -160,7 +160,6 @@ fastingBS.plot
 
 ```{r, include=TRUE}
 age.box <- boxplot(Age ~ HeartDisease, col=colours)
-restingBP.box <- boxplot(RestingBP ~ HeartDisease, col=colours)
 maxHR.box <- boxplot(MaxHR ~ HeartDisease, col=colours)
 ```
 
@@ -210,7 +209,7 @@ st.plot
 ### Missing values
 We have seen from the plots that there are 172 variables in Cholesterol that have value equal to 0. Also we have noted that patients that have Cholesterol equal to 0 are very likely to have the heart disease.
 
-One possibility is that the measurements were taken after the patient was dead, but if we inspect we see that the rows with missing data have RestingBP and MaxHR greater than 0 and RestingECG readings include Normal so it safe to assume that these patients are alive and the Cholesterol value was incorrectly recorded.
+One possibility is that the measurements were taken after the patient was dead, but if we inspect we see that the rows with missing data have RestingBP and MaxHR greater than 0 and RestingECG readings include "Normal" so it safe to assume that these patients are alive and the Cholesterol value was incorrectly recorded.
 
 Another guess is that the "serum cholesterol" measured by this variable combines the HDL and LDL values. High HDL and LDL would cancel each other out, making this variable less useful.
 
@@ -270,7 +269,7 @@ We divide our data in the training set and the test set.
 
 ```{r, include=TRUE}
 set.seed(123)
-split <- initial_split(data, prop=0.75)
+split <- initial_split(data[,-c(5)], prop=0.75)
 
 train <- training(split)
 test <- testing(split)
@@ -306,10 +305,16 @@ We chose to try different classification models, like Logistic Regression, Naive
 <br>
 
 ### LDA
-(Explain LDA)
+Linear Discriminant Analysis (LDA) is a classification algorithm, where a discriminant rule tries to divide the data points into K disjoint regions, where K is the number of classes (in this case K = 2).
+
+To do that we assume that our data follows a normal distribution and the classes have the same variance, and then we define a discriminant function, which tells us how likely is the observation to follow into a particular class.
+
+$$\delta_{k}(x) = log(f_{k}) + log(\pi_{k}) $$
+The decision boundary separating the classes is the set of x where two discriminant functions have the same value. Therefore, any data that falls on the decision boundary is equally likely from all the classes.
 
 ```{r, include=TRUE}
 lda.fit <- lda(HeartDisease~., data=train)
+lda.fit
 lda.pred <- predict(lda.fit, test, type="response")
 lda.res <- lda.pred$posterior
 
@@ -322,7 +327,18 @@ lda.conf.mat
 # accuracy, precision, recall, f1 score
 lda.metrics <- calculate.metrics(lda.conf.mat)
 lda.metrics
+```
 
+The Receiver Operating Characteristics traces out two types of error as we vary the threshold for the posterior probability:
+
+* The true positive rate or sensitivity: the fraction of patients having the heart condition that are correctly identified
+
+* The false positive rate: the fraction of patients without the conditions that we classify incorrectly with having the disease
+
+The dotted line represents the “no information”
+classifier; this is what we would expect if the predictors are not associated with probability of having the heart disease.
+
+```{r, include=TRUE}
 # ROC
 lda.auc <- model.plot.roc(lda.res[,2], test$HeartDisease)
 lda.auc
@@ -333,6 +349,8 @@ ldahist(lda.pred$x[,1], g=lda.pred$class, col=2)
 <br>
 
 ### QDA
+Quadratic Discriminant Analysis (QDA) doesn't assume the equal variance of the classes. For this reason the decision boundary is not linear but quadratic.
+
 ```{r, include=TRUE}
 qda.fit <- qda(HeartDisease~., data=train)
 

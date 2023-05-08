@@ -373,6 +373,7 @@ lda.metrics
 
 # ROC
 lda.auc <- model.plot.roc(lda.res[,2], test$HeartDisease)
+lda.auc
 
 ldahist(lda.pred$x[,1], g=lda.pred$class, col=2)
 
@@ -391,3 +392,4 @@ qda.metrics <- calculate.metrics(qda.conf.mat)
 qda.metrics
 
 qda.auc <- model.plot.roc(qda.pred$posterior[,2], test$HeartDisease)
+qda.auc
