@@ -96,7 +96,7 @@ In this section we want to visualize our data and clean it. In order to that we 
 prop.table(table(HeartDisease))
 ```
 
-The dataset is quite balanced.
+The target variable is quite balanced.
 
 <br>
 
@@ -105,20 +105,16 @@ Now we plot the continuous variables with respect to the target variable.
 
 ```{r, include=FALSE}
 # continuous variables
+cont.idx <- c(1,4,5,8,10)
+
 colours <- c("#F8766D", "#00BFC4")
 
 # Age
-age.plot.1 <- ggplot(data, aes(x=Age, group=HeartDisease,
+age.plot <- ggplot(data, aes(x=Age, group=HeartDisease,
                              fill=factor(HeartDisease))) +
   geom_density(alpha=0.4) + 
   ggtitle("Age - Density Plot") + xlab("Age") +
   guides(fill = guide_legend(title="Heart disease"))
-
-age.plot.2 <- ggplot(data, aes(x=Age, group=Sex,
-                               fill=factor(Sex))) +
-  geom_density(alpha=0.4) + 
-  ggtitle("Age - Density Plot") + xlab("Age") +
-  guides(fill = guide_legend(title="Gender"))
 
 # RestingBP
 restingBP.plot <- ggplot(data, aes(x=RestingBP, group=HeartDisease,
@@ -163,7 +159,7 @@ fastingBS.plot
 ```
 
 ```{r, include=TRUE}
-age.box.1 <- boxplot(Age ~ HeartDisease, col=colours)
+age.box <- boxplot(Age ~ HeartDisease, col=colours)
 restingBP.box <- boxplot(RestingBP ~ HeartDisease, col=colours)
 maxHR.box <- boxplot(MaxHR ~ HeartDisease, col=colours)
 ```
@@ -205,7 +201,6 @@ st.plot <- ggplot(data, aes(x=ST_Slope, group=HeartDisease,
 ```
 
 ```{r, include=TRUE}
-sex.plot
 cpt.plot
 restingECG.plot
 exAn.plot
@@ -213,34 +208,65 @@ st.plot
 ```
 
 ### Missing values
-We have seen from the plots that there many variables in Cholesterol that have value equal to 0. We assume that those variables are not plausible and we change them.
+We have seen from the plots that there are 172 variables in Cholesterol that have value equal to 0. Also we have noted that patients that have Cholesterol equal to 0 are very likely to have the heart disease.
 
-Since we don't want to delete data because we don't have many, in this case we replace the missing values with random values that follow a normal distribution with mean and standard deviation equal to that of the data (we don't want to influence too much).
+One possibility is that the measurements were taken after the patient was dead, but if we inspect we see that the rows with missing data have RestingBP and MaxHR greater than 0 and RestingECG readings include Normal so it safe to assume that these patients are alive and the Cholesterol value was incorrectly recorded.
+
+Another guess is that the "serum cholesterol" measured by this variable combines the HDL and LDL values. High HDL and LDL would cancel each other out, making this variable less useful.
+
+For this reason we decided not to use this variable in the models and as we are going to see it doesn't affect much the predictions.
+
+
 ``` {r, include=TRUE}
-data$Cholesterol[data$Cholesterol == 0] <- round(rnorm(length(data$Cholesterol[data$Cholesterol == 0]),
-                                                 mean(Cholesterol), sd(Cholesterol)),0)
+head(data[Cholesterol == 0, c("RestingBP", "MaxHR", "RestingECG")])
 ```
 
 <br>
 
 ### Outliers
-We decided not to deal with outliers since we don't have much data and we don't want to influence too much the results of our classifiers.
+For each continuous variable we see that:
+
+* Age: no outliers
+
+* RestingBP: the presence of outliers with high value is plausible
+
+* MaxHR: no outliers
+
+* Oldpeak: the values are in the range [-2, 6], there are many values equal to 0
 
 <br>
 
 ### Correlations
 ```{r, include=TRUE}
-model.matrix(~0+., data=data) %>%
-  cor(use="pairwise.complete.obs") %>%
-  ggcorrplot(show.diag=FALSE, lab=T, lab_size=1.5, tl.cex=5)
-
-
-
+cor.data <- cor(data[,cont.idx])
+corrplot(cor.data,
+         method="color",
+         diag=F,
+         tl.cex=0.4,
+         number.cex=0.5,
+         tl.col="black",
+         addCoef.col="grey50",
+         cl.pos="n")
 ```
 
+<br>
+
+### Graph
+We visualize the igraph to see the relationships between the continuous variables.
+
+```{r, include=TRUE}
+S <- var(data[,cont.idx])
+R <- -cov2cor(solve(S))
+G <- abs(R)>0.1
+diag(G) <- 0
+```
+
+![](img/igraph.png){width="50%"}
+
+<br>
 
 ### Data Preparation
-We divide our data in the training set and the test set. The training set is used to train the model, the test test is used to calculate the accuracy of the model.
+We divide our data in the training set and the test set.
 
 ```{r, include=TRUE}
 set.seed(123)
@@ -248,8 +274,9 @@ split <- initial_split(data, prop=0.75)
 
 train <- training(split)
 test <- testing(split)
+```
 
-
+```{r, include=FALSE}
 calculate.metrics <- function(conf.mat) {
   acc <- sum(diag(conf.mat))/sum(conf.mat)
   prec <- conf.mat[2,2] / sum(conf.mat[,2])
@@ -270,10 +297,60 @@ model.plot.roc <- function(predm, labl) {
 
 ```
 
+<br>
 
 ## Evaluation
 
-We chose to try different classification models, like Logistic Regression and Naive Bayes. For the former, we also used Lasso Regression and Ridge Regression. The goal is to predict whether or not heart disease is present in the patient.
+We chose to try different classification models, like Logistic Regression, Naive Bayes, LDA and QDA. For the former, we also used Lasso Regression and Ridge Regression. The goal is to predict whether or not heart disease is present in the patient.
+
+<br>
+
+### LDA
+(Explain LDA)
+
+```{r, include=TRUE}
+lda.fit <- lda(HeartDisease~., data=train)
+lda.pred <- predict(lda.fit, test, type="response")
+lda.res <- lda.pred$posterior
+
+# if we want to minimize the false positives the best result is when t = 0.6
+lda.pred.best <- as.factor(ifelse(lda.res[,2] > 0.6, 1, 0))
+
+lda.conf.mat <- table(test$HeartDisease, lda.pred.best)
+lda.conf.mat
+
+# accuracy, precision, recall, f1 score
+lda.metrics <- calculate.metrics(lda.conf.mat)
+lda.metrics
+
+# ROC
+lda.auc <- model.plot.roc(lda.res[,2], test$HeartDisease)
+lda.auc
+
+ldahist(lda.pred$x[,1], g=lda.pred$class, col=2)
+```
+
+<br>
+
+### QDA
+```{r, include=TRUE}
+qda.fit <- qda(HeartDisease~., data=train)
+
+qda.pred <- predict(qda.fit, test)
+qda.pred.best <- as.factor(ifelse(lda.res[,2] > 0.5, 1, 0))
+
+qda.conf.mat <- table(qda.pred.best, test$HeartDisease)
+qda.conf.mat
+
+qda.metrics <- calculate.metrics(qda.conf.mat)
+qda.metrics
+
+qda.auc <- model.plot.roc(qda.pred$posterior[,2], test$HeartDisease)
+qda.auc
+
+```
+
+<br>
 
 ### Simple Logistic Regression
 

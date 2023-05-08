@@ -1,0 +1,9 @@
+Francesco
+- Explain igraph
+- Explain LDA
+- Study ROC
+- Implement ANOVA for variable selection (Deviance on StatQuest)
+
+Marco -> Francesco
+- VIF
+- risultati Lasso

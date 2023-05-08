@@ -13,7 +13,6 @@ library(MASS)
 library(pROC)
 library(class)
 library(ggplot2)
-library(gridExtra)
 library(corrplot)
 library(ggm)
 library(tidymodels)
@@ -84,8 +83,6 @@ fastingBS.plot <- ggplot(data, aes(x=FastingBS, group=HeartDisease,
   geom_bar(alpha=0.5, position="dodge") +
   guides(fill = guide_legend(title="Heart disease"))
 
-grid.arrange(age.plot.1, age.plot.2, restingBP.plot, chol.plot, maxHR.plot,
-             oldpeak.plot, fastingBS.plot, nrow = 2)
 
 # Boxplots
 age.box <- boxplot(Age ~ HeartDisease, col=colours)
@@ -196,6 +193,7 @@ S <- var(data[,cont.idx])
 R <- -cov2cor(solve(S))
 G <- abs(R)>0.1
 diag(G) <- 0
+G
 # Gi <- as(G, "igraph")
 # tkplot(Gi, vertex.color="white")
 
@@ -370,7 +368,7 @@ lda.conf.mat
 mean(lda.pred.best!=test$HeartDisease)
 
 # accuracy, precision, recall, f1 score
-lda.metrics <- calculate.metrics(conf.mat)
+lda.metrics <- calculate.metrics(lda.conf.mat)
 lda.metrics
 
 # ROC
@@ -389,7 +387,7 @@ qda.pred.best <- as.factor(ifelse(lda.res[,2] > 0.5, 1, 0))
 qda.conf.mat <- table(qda.pred.best, test$HeartDisease)
 qda.conf.mat
 
-qda.metrics <- calculate.metrics(conf.mat)
+qda.metrics <- calculate.metrics(qda.conf.mat)
 qda.metrics
 
 qda.auc <- model.plot.roc(qda.pred$posterior[,2], test$HeartDisease)
