@@ -1,0 +1,7 @@
+Francesco
+- Explain igraph
+- Implement ANOVA for variable selection (Deviance on StatQuest)
+
+Marco -> Francesco
+- VIF
+- risultati Lasso

@@ -1,10 +1,8 @@
 # https://www.kaggle.com/datasets/fedesoriano/heart-failure-prediction
 install.packages("pROC")
 install.packages("ggplot2")
-install.packages("ggcorrplot")
 install.packages("gridExtra")
 install.packages("corrplot")
-install.packages("correlation")
 install.packages("ggm")
 install.packages("tidymodels")
 install.packages("naivebayes")
@@ -15,12 +13,8 @@ library(MASS)
 library(pROC)
 library(class)
 library(ggplot2)
-library(ggcorrplot)
-library(gridExtra)
 library(corrplot)
-library(correlation)
 library(ggm)
-library(igraph)
 library(tidymodels)
 library(naivebayes)
 library(ROCR)
@@ -29,10 +23,6 @@ library(glmnet)
 data.orig <- read.csv("data/heart_data.csv", stringsAsFactors = T)
 
 head(data.orig)
-
-# we get the shape of the dataframe
-nrows <- dim(data.orig)[1]
-ncols <- dim(data.orig)[2]
 
 # we check if there are missing values
 anyNA(data.orig)
@@ -46,28 +36,18 @@ attach(data)
 prop.table(table(HeartDisease))
 
 # continuous variables
-cont.val <- c("Age", "RestingBP", "Cholesterol", "FastingBS", "MaxHR",
-              "Oldpeak")
-
-# categorical variables
-cat.val <- c("Sex", "ChestPainType", "RestingECG", "ExerciseAngina", "ST_Slope")
+cont.idx <- c(1,4,5,8,10)
 
 # visualizing the data
 # continuous variables
 colours <- c("#F8766D", "#00BFC4")
 
 # Age
-age.plot.1 <- ggplot(data, aes(x=Age, group=HeartDisease,
+age.plot <- ggplot(data, aes(x=Age, group=HeartDisease,
                              fill=factor(HeartDisease))) +
   geom_density(alpha=0.4) + 
   ggtitle("Age - Density Plot") + xlab("Age") +
   guides(fill = guide_legend(title="Heart disease"))
-
-age.plot.2 <- ggplot(data, aes(x=Age, group=Sex,
-                               fill=factor(Sex))) +
-  geom_density(alpha=0.4) + 
-  ggtitle("Age - Density Plot") + xlab("Age") +
-  guides(fill = guide_legend(title="Gender"))
 
 # RestingBP
 restingBP.plot <- ggplot(data, aes(x=RestingBP, group=HeartDisease,
@@ -103,14 +83,10 @@ fastingBS.plot <- ggplot(data, aes(x=FastingBS, group=HeartDisease,
   geom_bar(alpha=0.5, position="dodge") +
   guides(fill = guide_legend(title="Heart disease"))
 
-grid.arrange(age.plot.1, age.plot.2, restingBP.plot, chol.plot, maxHR.plot,
-             oldpeak.plot, fastingBS.plot, nrow = 2)
 
 # Boxplots
-# TODO: should we deal with outliers?
-age.box.1 <- boxplot(Age ~ HeartDisease, col=colours)
-age.box.2 <- boxplot(Age ~ Sex, col=colours)
-restingBP.box <- boxplot(RestingBP ~ HeartDisease, col=colours) # TODO: check outliers?
+age.box <- boxplot(Age ~ HeartDisease, col=colours)
+restingBP.box <- boxplot(RestingBP ~ HeartDisease, col=colours)
 chol.box <- boxplot(Cholesterol ~ HeartDisease, col=colours)
 maxHR.box <- boxplot(MaxHR ~ HeartDisease, col=colours)
 oldpeak.box <- boxplot(Oldpeak ~ HeartDisease, col=colours)
@@ -148,55 +124,60 @@ st.plot <- ggplot(data, aes(x=ST_Slope, group=HeartDisease,
   guides(fill = guide_legend(title="Heart disease"))
 
 
-# QQ plots
-# TODO: what if data doesn't follow normal distribution?
-qqnorm(Age, pch = 1, frame = FALSE)
-qqline(Age, col="steelblue")
+# missing values
+# NOTE: changing missing values doesn't change accuracy of predictions
+# NOTE: can it be measure of both HDL and LDL?
+# TODO: why most values with 0 Chol have 1 HD?
+head(data[Cholesterol == 0,])
 
-qqnorm(RestingBP, pch = 1, frame = FALSE)
-qqline(RestingBP, col="steelblue")
+ch <- Cholesterol[Cholesterol != 0]
+hd <- data[Cholesterol != 0, "HeartDisease"]
+aov(hd ~ ch)
 
-qqnorm(Cholesterol, pch = 1, frame = FALSE)
-qqline(Cholesterol, col="steelblue")
-
-qqnorm(MaxHR, pch = 1, frame = FALSE)
-qqline(MaxHR, col="steelblue")
-
-qqnorm(Oldpeak, pch = 1, frame = FALSE)
-qqline(Oldpeak, col="steelblue")
+# point-biserial correlation
+cor.test(HeartDisease, Cholesterol) # negative correlation
+cor.test(hd, ch) # positive correlation
 
 
-# dealing with missing values
+data$Cholesterol[data$Cholesterol == 0] <- median(data$Cholesterol)
+
 data$RestingBP[data$RestingBP == 0] <- median(data$RestingBP)
-data$Cholesterol[data$Cholesterol == 0] <- round(rnorm(length(data$Cholesterol[data$Cholesterol == 0]),
-                                                 mean(Cholesterol), sd(Cholesterol)),0)
 
+attach(data)
 
-# ANOVA
-# TODO: study meaning of this
-# TODO: chi-square test?
-sex.aov <- aov(HeartDisease ~ Sex)
-summary(sex.aov)
+# outliers
+# Age -> no outliers
+# RestingBP -> the values even if they are high they are plausible
+# Cholesterol -> many missing values, too high outliers, no correlation
+# serum mean total chol not useful information
 
-sex.aov.2 <- aov(Age ~ Sex)
-summary(sex.aov) # TODO: why high p-value?
+# MaxHR -> no outliers
+# Oldpeak -> values follow the range, there are many values with 0
 
-cpt.aov <- aov(HeartDisease ~ ChestPainType)
-summary(cpt.aov)
-
-restingECG.aov <- aov(HeartDisease ~ RestingECG)
-summary(restingECG.aov)
-
-exAn.aov <- aov(HeartDisease ~ ExerciseAngina)
-summary(exAn.aov)
-
-st.aov <- aov(HeartDisease ~ ST_Slope)
-summary(sex.aov)
 
 # correlations
+
+# chi-squared test
+sex.t <- table(HeartDisease, Sex)
+chisq.test(sex.t)
+
+cpt.t <- table(HeartDisease, ChestPainType)
+chisq.test(cpt.t)
+
+fbs.t <- table(HeartDisease, FastingBS)
+chisq.test(fbs.t)
+
+recg.t <- table(HeartDisease, RestingECG)
+chisq.test(recg.t)
+
+exan.t <- table(HeartDisease, ExerciseAngina)
+chisq.test(exan.t)
+
+st.t <- table(HeartDisease, ST_Slope)
+chisq.test(st.t)
+
 # correlation matrix
-nums <- c(1,4,5,8,10)
-cor.data <- cor(data[,nums])
+cor.data <- cor(data[,cont.idx])
 corrplot(cor.data,
          method="color",
          diag=F,
@@ -208,26 +189,21 @@ corrplot(cor.data,
 
 
 # igraph
-S <- var(data[,nums])
+S <- var(data[,cont.idx])
 R <- -cov2cor(solve(S))
 G <- abs(R)>0.1
 diag(G) <- 0
-Gi <- as(G, "igraph")
-tkplot(Gi, vertex.color="white")
+G
+# Gi <- as(G, "igraph")
+# tkplot(Gi, vertex.color="white")
 
 
 # Train-Test split
 set.seed(123)
-split <- initial_split(data, prop=0.75)
+split <- initial_split(data[,-c(5)], prop=0.75) # removed Cholesterol
 
 train <- training(split)
 test <- testing(split)
-
-y.train <- train$HeartDisease
-X.train <- train[, !names(train) %in% c("HeartDisease")]
-
-y.test <- test$HeartDisease
-X.test <- test[, !names(test) %in% c("HeartDisease")]
 
 
 calculate.metrics <- function(conf.mat) {
@@ -374,7 +350,6 @@ model.plot.roc(naivebayes.probabilities, test$HeartDisease)
 
 
 ### LDA
-# NOTE: scaling dataset gets worse results
 lda.fit <- lda(HeartDisease~., data=train)
 plot(lda.fit, type="density")
 
@@ -383,37 +358,24 @@ plot(lda.fit, type="density")
 lda.pred <- predict(lda.fit, test, type="response")
 lda.res <- lda.pred$posterior
 
-lda.pred.t3 <- as.factor(ifelse(lda.res[,2] > 0.3, 1, 0))
-lda.pred.t4 <- as.factor(ifelse(lda.res[,2] > 0.4, 1, 0))
-lda.pred.t5 <- lda.pred$class
-
 lda.pred.best <- as.factor(ifelse(lda.res[,2] > 0.6, 1, 0))
 
 # the best result is when t = 0.6 if we want to minimize False Positives
-conf.mat <- table(test$HeartDisease, lda.pred.best)
-conf.mat
+lda.conf.mat <- table(test$HeartDisease, lda.pred.best)
+lda.conf.mat
 
 # error rate
 mean(lda.pred.best!=test$HeartDisease)
 
 # accuracy, precision, recall, f1 score
-metrics <- calculate.metrics(conf.mat)
+lda.metrics <- calculate.metrics(lda.conf.mat)
+lda.metrics
 
 # ROC
 lda.auc <- model.plot.roc(lda.res[,2], test$HeartDisease)
-
-
-# TODO: wrong ROC?
-roc.out <- roc(controls=test$HeartDisease, cases=lda.pred$posterior[,2],
-               direction=">")
-plot(roc.out, print.auc=TRUE, legacy.axes=TRUE,
-     xlab="False positive rate", ylab="True positive rate")
-auc(roc.out)
+lda.auc
 
 ldahist(lda.pred$x[,1], g=lda.pred$class, col=2)
-
-# TODO: how do I choose the best threshold?
-# TODO: how do I upgrade the model?
 
 
 
@@ -423,14 +385,11 @@ qda.fit <- qda(HeartDisease~., data=train)
 qda.pred <- predict(qda.fit, test)
 qda.pred.best <- as.factor(ifelse(lda.res[,2] > 0.5, 1, 0))
 
-conf.mat <- table(qda.pred.best, test$HeartDisease)
+qda.conf.mat <- table(qda.pred.best, test$HeartDisease)
+qda.conf.mat
 
-metrics <- calculate.metrics(conf.mat)
+qda.metrics <- calculate.metrics(qda.conf.mat)
+qda.metrics
 
 qda.auc <- model.plot.roc(qda.pred$posterior[,2], test$HeartDisease)
-
-roc.out <- roc(controls=test$HeartDisease, cases=qda.pred$posterior[,2],
-               direction=">")
-plot(roc.out, print.auc=TRUE, legacy.axes=TRUE,
-     xlab="False positive rate", ylab="True positive rate")
-auc(roc.out)
+qda.auc
