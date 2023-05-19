@@ -328,15 +328,11 @@ glm.model.3 <- update(glm.model.2, ~. - MaxHR)
 glm.model.4 <- update(glm.model.3, ~. - RestingBP)
 glm.model.5 <- update(glm.model.4, ~. - Cholesterol)
 
-
-
-glm_summary <- summary(glm.model.5)
-summary(glm.model.5)
 ```
 
 Let's now compute the R-squared and the Variance Inflation Factor (VIF) for each model
 
-R-squared is a measure of how much variance in the dependent variable is explained by the independent variables in the model. The VIF, on the other hand, is a measure of how much the variance of the estimated regression coefficient for a given independent variable is inflated due to multicollinearity.
+R-squared is a measure of how well the model explains the data and of how much variance in the dependent variable is explained by the independent variables in the model. The VIF, on the other hand, is a measure of how much the variance of the estimated regression coefficient for a given independent variable is inflated due to multicollinearity.
 
 A VIF value of 1 indicates no multicollinearity, while values greater than 1 suggest increasing levels of multicollinearity, with higher values indicating more severe multicollinearity.
 
@@ -346,9 +342,8 @@ A VIF value of 1 indicates no multicollinearity, while values greater than 1 sug
 glm.models = list(glm.model, glm.model.1, glm.model.2, glm.model.3, glm.model.4, glm.model.5)
 
 for (mdl in glm.models){
-
-  glm_summary <- summary(mdl)
-  r2 <- 1 - (glm_summary$deviance/glm_summary$null.deviance)
+  
+  r2 <- 1 - (mdl$deviance/mdl$null.deviance)
   cat("R-Squared: ", r2, "\n")
   vif <- 1/(1-r2)
   cat("VIF: ", vif, "\n")
@@ -359,8 +354,6 @@ for (mdl in glm.models){
 
 ```
 
-
-In all of the models above
 
 
 ### Threshold Selection
@@ -382,8 +375,8 @@ for (thr in thresholds) {
   conf_matrix
   glm.model.5.metrics <- calculate.metrics(conf_matrix)
   
-  cat("Threshold: ", thr, " -> ")
-  cat("Accuracy, Precision, Rec, F1-Score", paste(glm.model.5.metrics, collapse = ", "))
+  cat("Threshold: ", thr, "\n")
+  cat("Accuracy, Precision, Rec, F1-Score", paste(glm.model.5.metrics, collapse = ", "), "\n")
 }
 ```
 
@@ -400,7 +393,7 @@ Lasso regression is a regularization technique. It is used over regression metho
 Lasso Regression uses L1 regularization technique. It is used when we have more features because it automatically performs feature selection.
 
 ```{r, include=TRUE}
-X <- model.matrix(glm.model.3)
+X <- model.matrix(glm.model)
 y <- train$HeartDisease
 
 lasso.model <- cv.glmnet(X, y, family = "binomial", type.measure = "class")
@@ -410,7 +403,7 @@ lasso.vars <- rownames(lasso.coef)[-1][lasso.coef[-1,] != 0]
 ```
 
 ```{r, include=TRUE}
-cat("Selected variables with Lasso Regression:", paste(lasso.vars, collapse = ", "))
+cat("Selected variables with Lasso Regression:\n\n", paste(lasso.vars, collapse = "\n"))
 ```
 
 
@@ -432,7 +425,7 @@ The negative signs on some of the coefficients indicate that an increase in the 
 
 ```{r, include=TRUE}
 
-X <- model.matrix(glm.model.3)
+X <- model.matrix(glm.model)
 y <- train$HeartDisease
 
 fit <- cv.glmnet(X, y, family = "binomial", alpha = 0, type.measure = "deviance")
@@ -442,7 +435,29 @@ coef(fit, s = "lambda.min")
 
 Let's now analyze the findings:
 
-* SexM: 1.2119 means that on average, individuals who are males have a 1.2119 unit increase in the response variable compared to individuals who are female, after controlling for the effects of the other predictors.
+
+* Age: has a positive coefficient of 0.0163458978, indicating that as the patient's age increases, it is more likely that he will develop coronary heart disease. However, the effect size is relatively small.
+
+* SexM: has a positive coefficient of 1.1517935357, suggesting that being male is associated with a higher probability to develop coronary heart disease compared to being female.
+
+* ChestPainType: Atypical Angina (ATA), Non-Anginal Pain (NAP) and Typical Angina (TA) all have negative coefficients of, respectively, -1.4349262773, -1.2271374244, and -0.7217731699. Although this suggests that, contrary to known symptoms, chest pain is not a great predictor of coronary heart disease, the best one of them is Typical Anginal Pain.
+
+* RestingBP: has a negative coefficient of -0.0003161166. The effect size of resting blood pressure is very small.
+
+* Cholesterol: has a negative coefficient of -0.0007523391. The effect size of cholesterol increasing is minimal.
+
+* FastingBS: fasting blood sugar has a positive coefficient of 0.8487488409, indicating that having higher levels of blood sugar is associated with higher risk of developing coronary heart disease.
+
+* RestingECG: as expected, a normal ECG result (RestingECGNormal) decreases the risk of developing coronary heart disease, or at the very least it doesn't promote it. 
+The ST Segment (RestingECGST), however, has a positive coefficient of 0.0249998948, indicating that abnormalities in the ST segment of the resting ECG are associated with higher risk of developing coronary heart disease.
+
+* MaxHR: has a negative coefficient of -0.0106028269. This suggests that as the maximum heart rate decreases, the likelihood of developing coronary heart disease decrease as well. This makes sense, as a high resting heart rate means that the heart is working harder than expected, and therefore leading to believe something is wrong.
+
+* ExerciseAngina: ExerciseAnginaY has a positive coefficient of 0.3537110430, indicating that experiencing exercise-induced angina is associated with a higher probability of having coronary heart disease.
+
+* Oldpeak: represents ST depression induced by exercise relative to rest and has a positive coefficient of 0.3537110430. This implies that as the the presence of ST segment depression correlates to having coronary heart disease and may indicate coronary ischemia.
+
+* ST_Slope: represents the slope of the peak exercise ST segment. The coefficient for "ST_SlopeFlat" is 1.0240322651, suggesting that having a flat ST segment during exercise is correlated to having coronary heart disease and may indicate coronary ischemia.
 
 ### Naive Bayes Classifier
 
