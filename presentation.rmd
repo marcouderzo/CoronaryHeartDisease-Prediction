@@ -25,6 +25,7 @@ library(tidymodels)
 library(naivebayes)
 library(ROCR)
 library(glmnet)
+library(stats)
 
 data <- read.csv("data/heart_data.csv", stringsAsFactors = T)
 
@@ -421,7 +422,7 @@ glm.model.1 <- update(glm.model, ~. - Age)
 glm.model.2 <- update(glm.model.1, ~. - RestingECG)
 glm.model.3 <- update(glm.model.2, ~. - MaxHR)
 glm.model.4 <- update(glm.model.3, ~. - RestingBP)
-glm.model.5 <- update(glm.model.4, ~. - Cholesterol)
+#glm.model.5 <- update(glm.model.4, ~. - Cholesterol)
 
 ```
 
@@ -434,7 +435,7 @@ A VIF value of 1 indicates no multicollinearity, while values greater than 1 sug
 ```{r, include=TRUE}
 
 
-glm.models = list(glm.model, glm.model.1, glm.model.2, glm.model.3, glm.model.4, glm.model.5)
+glm.models = list(glm.model, glm.model.1, glm.model.2, glm.model.3, glm.model.4)
 
 for (mdl in glm.models){
   
@@ -450,6 +451,21 @@ for (mdl in glm.models){
 ```
 
 
+### Bayesian Information Criterion (BIC)
+
+```{r, include=TRUE}
+glm.models = list(glm.model, glm.model.1, glm.model.2, glm.model.3, glm.model.4)
+
+for (mdl in glm.models){
+  glm.bic <- BIC(mdl)
+  print(glm.bic)
+}
+
+```
+
+Best model: glm.model.4 with a BIC of 522.2917.
+
+
 
 ### Threshold Selection
 
@@ -463,22 +479,22 @@ thresholds = c(0.3, 0.4, 0.5, 0.6)
 
 for (thr in thresholds) {
 
-  prediction.glm.model.5 <- predict(glm.model.5, newdata=test, type="response")
-  prediction.glm.model.5.binary <- ifelse(prediction.glm.model > thr, 1, 0)
+  prediction.glm.model.4 <- predict(glm.model.4, newdata=test, type="response")
+  prediction.glm.model.4.binary <- ifelse(prediction.glm.model > thr, 1, 0)
   
-  conf_matrix <- table(test$HeartDisease, prediction.glm.model.5.binary)
+  conf_matrix <- table(test$HeartDisease, prediction.glm.model.4.binary)
   conf_matrix
-  glm.model.5.metrics <- calculate.metrics(conf_matrix)
+  glm.model.4.metrics <- calculate.metrics(conf_matrix)
   
   cat("Threshold: ", thr, "\n")
-  cat("Accuracy, Precision, Rec, F1-Score", paste(glm.model.5.metrics, collapse = ", "), "\n")
+  cat("Accuracy, Precision, Rec, F1-Score", paste(glm.model.4.metrics, collapse = ", "), "\n")
 }
 ```
 
 Let's also plot the ROC Curve for the final model.
 
 ```{r, include=TRUE}
-model.plot.roc(prediction.glm.model.5, test$HeartDisease)
+model.plot.roc(prediction.glm.model.4, test$HeartDisease)
 ```
 
 ### Lasso Regression
@@ -553,6 +569,55 @@ The ST Segment (RestingECGST), however, has a positive coefficient of 0.02499989
 * Oldpeak: represents ST depression induced by exercise relative to rest and has a positive coefficient of 0.3537110430. This implies that as the the presence of ST segment depression correlates to having coronary heart disease and may indicate coronary ischemia.
 
 * ST_Slope: represents the slope of the peak exercise ST segment. The coefficient for "ST_SlopeFlat" is 1.0240322651, suggesting that having a flat ST segment during exercise is correlated to having coronary heart disease and may indicate coronary ischemia.
+
+
+
+### Analysis of Deviance
+
+```{r, include=TRUE}
+# Full model
+
+glm.model.full <- glm(data=train, HeartDisease~., family="binomial")
+
+deviance(glm.model.full)
+
+
+pi.hat <- predict(glm.model.full, type="response")
+DF <- -2*sum(HeartDisease*log(pi.hat)+(1-HeartDisease)*log(1-pi.hat))
+DF
+
+df.F <- glm.model.full$df.residual
+df.F
+
+
+glm.model.reduced <- glm.model.4
+
+
+deviance(glm.model.reduced)
+
+pi.hat <- predict(glm.model.reduced, type="response")
+DR <- -2*sum(HeartDisease*log(pi.hat)+(1-HeartDisease)*log(1-pi.hat))
+DR
+
+df.R <- glm.model.reduced$df.residual
+df.R
+
+# Deviance difference test
+
+dev.test <- DR-DF
+dev.test
+df <- df.R- df.F
+df
+
+pvalue <- 1-pchisq(dev.test, df)
+pvalue
+
+
+# deviance difference using the anova() function
+
+anova(glm.model.reduced, glm.model.full, test="Chisq")
+
+```
 
 ### Naive Bayes Classifier
 
