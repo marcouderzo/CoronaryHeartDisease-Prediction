@@ -623,24 +623,51 @@ anova(glm.model.reduced, glm.model.full, test="Chisq")
 
 One other model we tried is the Naive Bayes Classifier. It is a classification technique based on Bayes’ Theorem with an independence assumption among predictors. In simple terms, a Naive Bayes classifier assumes that the presence of a particular feature in a class is unrelated to the presence of any other feature.
 
+```{r, include=TRUE}
+
+calculate_confusion_matrix <- function(predictions, true_labels) {
+  # Convert the predictions and true labels to factors
+  predictions <- as.factor(predictions)
+  true_labels <- as.factor(true_labels)
+  
+  # Create the confusion matrix
+  confusion_matrix <- table(true_labels, predictions)
+  
+  return(confusion_matrix)
+}
+
+calculate_roc <- function(predictions, true_labels) {
+  # Convert the predictions and true labels to factors
+  predictions <- as.factor(predictions)
+  true_labels <- as.factor(true_labels)
+  
+  # Calculate the true positive rate (sensitivity) and false positive rate
+  roc <- roc(true_labels, predictions)
+  
+  return(roc)
+}
+
+
+
+```
 
 
 ```{r, include=TRUE}
 train$HeartDisease <- as.factor(train$HeartDisease)
 test$HeartDisease <- as.factor(test$HeartDisease)
+test$HeartDisease
 
 naivebayes.model <- naive_bayes(HeartDisease~., data=train)
 naivebayes.prediction <- predict(naivebayes.model, test)
-head(cbind(naivebayes.prediction, test$HeartDisease))
 
-naivebayes.conf_matrix <- table(naivebayes.prediction, test$HeartDisease)
+
+naivebayes.conf_matrix <- calculate_confusion_matrix(naivebayes.prediction, test$HeartDisease)
 naivebayes.conf_matrix
 
 naivebayes.metrics <- calculate.metrics(naivebayes.conf_matrix)
 naivebayes.metrics
 
-naivebayes.probabilities <- attr(naivebayes.prediction, "probabilities")[, "Yes"]
-#model.plot.roc(naivebayes.probabilities, test$HeartDisease) this triggers the error
+model.plot.roc(naivebayes.prediction, test$HeartDisease)
 
 ```
 

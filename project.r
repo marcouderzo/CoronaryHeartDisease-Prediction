@@ -332,7 +332,7 @@ train$HeartDisease <- as.factor(train$HeartDisease)
 test$HeartDisease <- as.factor(test$HeartDisease)
 
 naivebayes.model <- naive_bayes(HeartDisease~., data=train)
-naivebayes.prediction <- predict(naivebayes.model, test)
+naivebayes.prediction <- predict(naivebayes.model, test, type= "prob")
 head(cbind(naivebayes.prediction, test$HeartDisease))
 
 naivebayes.conf_matrix <- table(naivebayes.prediction, test$HeartDisease)
