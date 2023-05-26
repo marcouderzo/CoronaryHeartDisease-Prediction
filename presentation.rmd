@@ -671,7 +671,6 @@ df
 pvalue <- 1-pchisq(dev.test, df)
 pvalue
 
-
 # deviance difference using the anova() function
 
 anova(glm.model.reduced, glm.model.full, test="Chisq")
