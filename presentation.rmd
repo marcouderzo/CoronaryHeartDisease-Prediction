@@ -511,11 +511,44 @@ lasso.model <- cv.glmnet(X, y, family = "binomial", type.measure = "class")
 
 lasso.coef <- coef(lasso.model, s = "lambda.min")
 lasso.vars <- rownames(lasso.coef)[-1][lasso.coef[-1,] != 0]
+
+cat("Selected variables with Lasso Regression:\n\n", paste(lasso.vars, collapse = "\n"))
+
+
+X_test <- model.matrix(glm.model, data = test)
+
+
+y_pred <- predict(lasso.model, newx = X_test, s = "lambda.min", type = "response")
+
+
+y_pred_class <- ifelse(y_pred > 0.6, 1, 0)  # Convert probabilities to classes
+
+
+
+
+
+```
+```{r, include=TRUE}
+
+lasso.conf.mat <- table(y_pred_class, test$HeartDisease)
+lasso.conf.mat
+
 ```
 
 ```{r, include=TRUE}
-cat("Selected variables with Lasso Regression:\n\n", paste(lasso.vars, collapse = "\n"))
+
+lasso.metrics <- calculate.metrics(lasso.conf.mat)
+lasso.metrics
+
 ```
+
+
+```{r, include=TRUE}
+
+lasso.roc <- model.plot.roc(y_pred, test$HeartDisease)
+
+```
+
 
 
 ### Ridge Regression
@@ -542,6 +575,32 @@ y <- train$HeartDisease
 fit <- cv.glmnet(X, y, family = "binomial", alpha = 0, type.measure = "deviance")
 
 coef(fit, s = "lambda.min")
+
+
+y_pred <- predict(fit, newx = X_test, s = "lambda.min", type = "response")
+
+y_pred_class <- ifelse(y_pred > 0.5, 1, 0)  # Convert probabilities to classes
+
+
+
+
+```
+
+```{r, include=TRUE}
+ridge.conf.mat <- table(y_pred_class, test$HeartDisease)
+ridge.conf.mat
+```
+
+
+```{r, include=TRUE}
+ridge.metrics <- calculate.metrics(ridge.conf.mat)
+ridge.metrics
+```
+
+
+```{r, include=TRUE}
+
+ridge.roc <- model.plot.roc(y_pred, test$HeartDisease)
 ```
 
 Let's now analyze the findings:
@@ -625,27 +684,6 @@ One other model we tried is the Naive Bayes Classifier. It is a classification t
 
 ```{r, include=TRUE}
 
-calculate_confusion_matrix <- function(predictions, true_labels) {
-  # Convert the predictions and true labels to factors
-  predictions <- as.factor(predictions)
-  true_labels <- as.factor(true_labels)
-  
-  # Create the confusion matrix
-  confusion_matrix <- table(true_labels, predictions)
-  
-  return(confusion_matrix)
-}
-
-calculate_roc <- function(predictions, true_labels) {
-  # Convert the predictions and true labels to factors
-  predictions <- as.factor(predictions)
-  true_labels <- as.factor(true_labels)
-  
-  # Calculate the true positive rate (sensitivity) and false positive rate
-  roc <- roc(true_labels, predictions)
-  
-  return(roc)
-}
 
 
 
@@ -655,19 +693,21 @@ calculate_roc <- function(predictions, true_labels) {
 ```{r, include=TRUE}
 train$HeartDisease <- as.factor(train$HeartDisease)
 test$HeartDisease <- as.factor(test$HeartDisease)
-test$HeartDisease
+
 
 naivebayes.model <- naive_bayes(HeartDisease~., data=train)
-naivebayes.prediction <- predict(naivebayes.model, test)
+naivebayes.prediction <- predict(naivebayes.model, newx = test, type = "prob")
+y_pred_class <- ifelse(y_pred > 0.6, 1, 0)  # Convert probabilities to classes
 
 
-naivebayes.conf_matrix <- calculate_confusion_matrix(naivebayes.prediction, test$HeartDisease)
-naivebayes.conf_matrix
 
-naivebayes.metrics <- calculate.metrics(naivebayes.conf_matrix)
-naivebayes.metrics
-
-model.plot.roc(naivebayes.prediction, test$HeartDisease)
+#naivebayes.conf.mat <- table(y_pred_class, test$HeartDisease)
+#
+#
+#naivebayes.metrics <- calculate.metrics(naivebayes.conf_matrix)
+#naivebayes.metrics
+#
+#model.plot.roc(naivebayes.prediction, test$HeartDisease)
 
 ```
 
