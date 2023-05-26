@@ -642,7 +642,7 @@ deviance(glm.model.full)
 
 
 pi.hat <- predict(glm.model.full, type="response")
-DF <- -2*sum(HeartDisease*log(pi.hat)+(1-HeartDisease)*log(1-pi.hat))
+DF <- -2*sum(train$HeartDisease*log(pi.hat)+(1-train$HeartDisease)*log(1-pi.hat))
 DF
 
 df.F <- glm.model.full$df.residual
@@ -655,7 +655,7 @@ glm.model.reduced <- glm.model.4
 deviance(glm.model.reduced)
 
 pi.hat <- predict(glm.model.reduced, type="response")
-DR <- -2*sum(HeartDisease*log(pi.hat)+(1-HeartDisease)*log(1-pi.hat))
+DR <- -2*sum(train$HeartDisease*log(pi.hat)+(1-train$HeartDisease)*log(1-pi.hat))
 DR
 
 df.R <- glm.model.reduced$df.residual
