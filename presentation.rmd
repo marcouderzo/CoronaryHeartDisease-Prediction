@@ -494,7 +494,8 @@ for (thr in thresholds) {
 Let's also plot the ROC Curve for the final model.
 
 ```{r, include=TRUE}
-model.plot.roc(prediction.glm.model.4, test$HeartDisease)
+glm.model.4.roc <- model.plot.roc(prediction.glm.model.4, test$HeartDisease)
+
 ```
 
 ### Lasso Regression
@@ -643,10 +644,10 @@ deviance(glm.model.full)
 
 pi.hat <- predict(glm.model.full, type="response")
 DF <- -2*sum(train$HeartDisease*log(pi.hat)+(1-train$HeartDisease)*log(1-pi.hat))
-DF
+
 
 df.F <- glm.model.full$df.residual
-df.F
+
 
 
 glm.model.reduced <- glm.model.4
@@ -656,17 +657,16 @@ deviance(glm.model.reduced)
 
 pi.hat <- predict(glm.model.reduced, type="response")
 DR <- -2*sum(train$HeartDisease*log(pi.hat)+(1-train$HeartDisease)*log(1-pi.hat))
-DR
 
 df.R <- glm.model.reduced$df.residual
-df.R
+
 
 # Deviance difference test
 
 dev.test <- DR-DF
-dev.test
+
 df <- df.R- df.F
-df
+
 
 pvalue <- 1-pchisq(dev.test, df)
 pvalue
@@ -677,16 +677,18 @@ anova(glm.model.reduced, glm.model.full, test="Chisq")
 
 ```
 
-### Naive Bayes Classifier
-
-One other model we tried is the Naive Bayes Classifier. It is a classification technique based on Bayes’ Theorem with an independence assumption among predictors. In simple terms, a Naive Bayes classifier assumes that the presence of a particular feature in a class is unrelated to the presence of any other feature.
+### Model Comparison
 
 ```{r, include=TRUE}
 
 
 
-
 ```
+
+### Naive Bayes Classifier
+
+One other model we tried is the Naive Bayes Classifier. It is a classification technique based on Bayes’ Theorem with an independence assumption among predictors. In simple terms, a Naive Bayes classifier assumes that the presence of a particular feature in a class is unrelated to the presence of any other feature.
+
 
 
 ```{r, include=TRUE}
@@ -700,13 +702,83 @@ y_pred_class <- ifelse(y_pred > 0.6, 1, 0)  # Convert probabilities to classes
 
 
 
-#naivebayes.conf.mat <- table(y_pred_class, test$HeartDisease)
-#
-#
-#naivebayes.metrics <- calculate.metrics(naivebayes.conf_matrix)
-#naivebayes.metrics
-#
+naivebayes.conf.mat <- table(y_pred_class, test$HeartDisease)
+
+
+naivebayes.metrics <- calculate.metrics(naivebayes.conf.mat)
+naivebayes.metrics
+
 #model.plot.roc(naivebayes.prediction, test$HeartDisease)
 
 ```
+
+
+
+```{r, include=TRUE}
+
+# acc, prec, rec, f1.score
+
+lda.acc <- lda.metrics[1][[1]]
+lda.prec <- lda.metrics[2][[1]]
+lda.rec <- lda.metrics[3][[1]]
+lda.f1 <- lda.metrics[4][[1]]
+lda.roc <- lda.auc[[1]]
+
+qda.acc <- qda.metrics[1][[1]]
+qda.prec <- qda.metrics[2][[1]]
+qda.rec <- qda.metrics[3][[1]]
+qda.f1 <- qda.metrics[4][[1]]
+qda.roc <- qda.auc[[1]]
+
+glm.acc <- glm.model.4.metrics[[1]][[1]]
+glm.prec <- glm.model.4.metrics[2][[1]]
+glm.rec <- glm.model.4.metrics[3][[1]]
+glm.f1 <- glm.model.4.metrics[4][[1]]
+glm.model.4.roc <- glm.model.4.roc[[1]]
+
+lasso.acc <- lasso.metrics[1][[1]]
+lasso.prec <- lasso.metrics[2][[1]]
+lasso.rec <- lasso.metrics[3][[1]]
+lasso.f1 <- lasso.metrics[4][[1]]
+lasso.roc <- lasso.roc[[1]]
+
+ridge.acc <- ridge.metrics[1][[1]]
+ridge.prec <- ridge.metrics[2][[1]]
+ridge.rec <- ridge.metrics[3][[1]]
+ridge.f1 <- ridge.metrics[4][[1]]
+ridge.roc <- ridge.roc[[1]]
+
+naivebayes.acc <- naivebayes.metrics[1][[1]]
+naivebayes.prec <- naivebayes.metrics[2][[1]]
+naivebayes.rec <- naivebayes.metrics[3][[1]]
+naivebayes.f1 <- naivebayes.metrics[4][[1]]
+#naivebayes.roc <- naivebayes.roc[[1]]
+
+
+
+
+acc <- c(lda.acc, qda.acc, glm.acc, lasso.acc, ridge.acc, naivebayes.acc)
+prec <- c(lda.prec, qda.prec, glm.prec, lasso.prec, ridge.prec, naivebayes.prec)
+rec <- c(lda.rec, qda.rec, glm.rec, lasso.rec, ridge.rec, naivebayes.rec)
+f1.score <- c(lda.f1, qda.f1, glm.f1, lasso.f1, ridge.f1, naivebayes.f1)
+roc <- c(lda.roc, qda.roc, glm.model.4.roc, lasso.roc, ridge.roc, 0) # naivebayes.roc to be fixed.
+
+
+model_performance <- matrix(c(acc, prec, rec, f1.score, roc), nrow = 6, ncol = 5, byrow = TRUE)
+
+model_names <- c("LDA", "QDA", "Logistic Regression", "Lasso Regression", "Ridge Regression", "Naive Bayes")
+
+performance_summary <- data.frame(Model = model_names, model_performance)
+
+
+colnames(performance_summary) <- c("Model", "Accuracy", "Precision", "Recall", "F1 Score", "ROC")
+
+print(performance_summary)
+
+
+```
+
+
+Naive Bayes seems to outperform all the above models in all metrics, with each metric being >= 90%.
+
 
