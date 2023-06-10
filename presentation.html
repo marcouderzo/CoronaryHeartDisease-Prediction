@@ -756,27 +756,25 @@ glm.model.metrics</code></pre>
 <p>All statistical tests have a null hypothesis. For most tests, the
 null hypothesis is that there is no relationship between your variables
 of interest or that there is no difference among groups. The p value, or
-probability value, tells you how likely it is that your data could have
+probability value, tells how likely it is that the data could have
 occurred under the null hypothesis. It does this by calculating the
-likelihood of your test statistic, which is the number calculated by a
-statistical test using your data.</p>
-<p>The p value tells you how often you would expect to see a test
-statistic as extreme or more extreme than the one calculated by your
-statistical test if the null hypothesis of that test was true. The p
-value gets smaller as the test statistic calculated from your data gets
-further away from the range of test statistics predicted by the null
-hypothesis.</p>
-<p>The p value is a proportion: if your p value is 0.05, that means that
-5% of the time you would see a test statistic at least as extreme as the
-one you found if the null hypothesis was true.</p>
+likelihood of the test statistic, which is the number calculated by a
+statistical test using the data.</p>
+<p>The p value tells how often one would expect to see a test statistic
+as extreme or more extreme than the one calculated by the statistical
+test if the null hypothesis of that test was true. The p value gets
+smaller as the test statistic calculated from the data gets further away
+from the range of test statistics predicted by the null hypothesis.</p>
+<p>The p value is a proportion: if the p value is 0.05, that means that
+5% of the time one would see a test statistic at least as extreme as the
+one they found if the null hypothesis was true.</p>
 <p>We found out that Age, RestingECG and MaxHR are not good enough
 predictors, having a p-value &gt;= 0.05. We thus only kept predictors
 with a p-value &lt; 0.05.</p>
 <pre class="r"><code>glm.model.1 &lt;- update(glm.model, ~. - Age)
 glm.model.2 &lt;- update(glm.model.1, ~. - RestingECG)
 glm.model.3 &lt;- update(glm.model.2, ~. - MaxHR)
-glm.model.4 &lt;- update(glm.model.3, ~. - RestingBP)
-#glm.model.5 &lt;- update(glm.model.4, ~. - Cholesterol)</code></pre>
+glm.model.4 &lt;- update(glm.model.3, ~. - RestingBP)</code></pre>
 <p>Let’s now compute the R-squared and the Variance Inflation Factor
 (VIF) for each model</p>
 <p>R-squared is a measure of how well the model explains the data and of
@@ -788,6 +786,7 @@ multicollinearity.</p>
 <p>A VIF value of 1 indicates no multicollinearity, while values greater
 than 1 suggest increasing levels of multicollinearity, with higher
 values indicating more severe multicollinearity.</p>
+<p>TODO: check for multicollinearity</p>
 <pre class="r"><code>glm.models = list(glm.model, glm.model.1, glm.model.2, glm.model.3, glm.model.4)
 
 for (mdl in glm.models){

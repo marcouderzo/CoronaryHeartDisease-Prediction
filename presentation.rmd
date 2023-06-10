@@ -408,11 +408,11 @@ glm.model.metrics
 ### Variable Selection using p-value
 
 All statistical tests have a null hypothesis. For most tests, the null hypothesis is that there is no relationship between your variables of interest or that there is no difference among groups.
-The p value, or probability value, tells you how likely it is that your data could have occurred under the null hypothesis. It does this by calculating the likelihood of your test statistic, which is the number calculated by a statistical test using your data.
+The p value, or probability value, tells how likely it is that the data could have occurred under the null hypothesis. It does this by calculating the likelihood of the test statistic, which is the number calculated by a statistical test using the data.
 
-The p value tells you how often you would expect to see a test statistic as extreme or more extreme than the one calculated by your statistical test if the null hypothesis of that test was true. The p value gets smaller as the test statistic calculated from your data gets further away from the range of test statistics predicted by the null hypothesis.
+The p value tells how often one would expect to see a test statistic as extreme or more extreme than the one calculated by the statistical test if the null hypothesis of that test was true. The p value gets smaller as the test statistic calculated from the data gets further away from the range of test statistics predicted by the null hypothesis.
 
-The p value is a proportion: if your p value is 0.05, that means that 5% of the time you would see a test statistic at least as extreme as the one you found if the null hypothesis was true.
+The p value is a proportion: if the p value is 0.05, that means that 5% of the time one would see a test statistic at least as extreme as the one they found if the null hypothesis was true.
 
 
 We found out that Age, RestingECG and MaxHR are not good enough predictors, having a p-value >= 0.05. We thus only kept predictors with a p-value < 0.05. 
@@ -422,7 +422,6 @@ glm.model.1 <- update(glm.model, ~. - Age)
 glm.model.2 <- update(glm.model.1, ~. - RestingECG)
 glm.model.3 <- update(glm.model.2, ~. - MaxHR)
 glm.model.4 <- update(glm.model.3, ~. - RestingBP)
-#glm.model.5 <- update(glm.model.4, ~. - Cholesterol)
 
 ```
 
@@ -431,6 +430,8 @@ Let's now compute the R-squared and the Variance Inflation Factor (VIF) for each
 R-squared is a measure of how well the model explains the data and of how much variance in the dependent variable is explained by the independent variables in the model. The VIF, on the other hand, is a measure of how much the variance of the estimated regression coefficient for a given independent variable is inflated due to multicollinearity.
 
 A VIF value of 1 indicates no multicollinearity, while values greater than 1 suggest increasing levels of multicollinearity, with higher values indicating more severe multicollinearity.
+
+TODO: check for multicollinearity
 
 ```{r, include=TRUE}
 
