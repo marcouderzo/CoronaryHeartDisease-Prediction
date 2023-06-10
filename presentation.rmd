@@ -500,7 +500,7 @@ glm.model.4.roc <- model.plot.roc(prediction.glm.model.4, test$HeartDisease)
 
 ### Lasso Regression
 
-Lasso regression is a regularization technique. It is used over regression methods for a more accurate prediction. This model uses shrinkage. Shrinkage is where data values are shrunk towards a central point as the mean. The lasso procedure encourages simple, sparse models (i.e. models with fewer parameters). This particular type of regression is well-suited for models showing high levels of multicollinearity or when you want to automate certain parts of model selection, like variable selection/parameter elimination.
+Lasso regression is a regularization technique. It is used over regression methods for a more accurate prediction. This model uses shrinkage, that is where data values are shrunk towards a central point as the mean. The lasso procedure encourages simple, sparse models (i.e. models with fewer parameters).
 
 Lasso Regression uses L1 regularization technique. It is used when we have more features because it automatically performs feature selection.
 
@@ -562,8 +562,6 @@ and variances are large, this results in predicted values being far away from th
 
 Ridge Regression is performed in order to check the coefficient estimates, that represent the expected change in the response variable for a one-unit increase in each predictor, holding all other predictors constant.
 
-The coefficient estimates represent the expected change in the response variable for a one-unit increase in each predictor, holding all others predictors constant. 
-
 The negative signs on some of the coefficients indicate that an increase in the corresponding predictor is associated with a decrease in the response variable, while positive signs indicate an increase in the predictor is associated with an increase in the response variable.
 
 
@@ -604,12 +602,29 @@ ridge.metrics
 ridge.roc <- model.plot.roc(y_pred, test$HeartDisease)
 ```
 
-Let's now analyze the findings:
+Let's now analyze the findings of Ridge Regression:
 
+Positive Coefficients:
 
 * Age: has a positive coefficient of 0.0163458978, indicating that as the patient's age increases, it is more likely that he will develop coronary heart disease. However, the effect size is relatively small.
 
 * SexM: has a positive coefficient of 1.1517935357, suggesting that being male is associated with a higher probability to develop coronary heart disease compared to being female.
+
+* FastingBS: fasting blood sugar has a positive coefficient of 0.8487488409, indicating that having higher levels of blood sugar is associated with higher risk of developing coronary heart disease.
+
+* RestingECG: as expected, a normal ECG result (RestingECGNormal) decreases the risk of developing coronary heart disease, or at the very least it doesn't promote it. 
+The ST Segment (RestingECGST), however, has a positive coefficient of 0.0249998948, indicating that abnormalities in the ST segment of the resting ECG are associated with higher risk of developing coronary heart disease.
+
+* ExerciseAngina: ExerciseAnginaY has a positive coefficient of 0.3537110430, indicating that experiencing exercise-induced angina is associated with a higher probability of having coronary heart disease.
+
+* Oldpeak: represents ST depression induced by exercise relative to rest and has a positive coefficient of 0.3537110430. This implies that as the the presence of ST segment depression correlates to having coronary heart disease and may indicate coronary ischemia.
+
+* ST_Slope: represents the slope of the peak exercise ST segment. The coefficient for "ST_SlopeFlat" is 1.0240322651, suggesting that having a flat ST segment during exercise is correlated to having coronary heart disease and may indicate coronary ischemia.
+
+
+
+
+Negative Coefficients:
 
 * ChestPainType: Atypical Angina (ATA), Non-Anginal Pain (NAP) and Typical Angina (TA) all have negative coefficients of, respectively, -1.4349262773, -1.2271374244, and -0.7217731699. Although this suggests that, contrary to known symptoms, chest pain is not a great predictor of coronary heart disease, the best one of them is Typical Anginal Pain.
 
@@ -617,18 +632,12 @@ Let's now analyze the findings:
 
 * Cholesterol: has a negative coefficient of -0.0007523391. The effect size of cholesterol increasing is minimal.
 
-* FastingBS: fasting blood sugar has a positive coefficient of 0.8487488409, indicating that having higher levels of blood sugar is associated with higher risk of developing coronary heart disease.
-
-* RestingECG: as expected, a normal ECG result (RestingECGNormal) decreases the risk of developing coronary heart disease, or at the very least it doesn't promote it. 
-The ST Segment (RestingECGST), however, has a positive coefficient of 0.0249998948, indicating that abnormalities in the ST segment of the resting ECG are associated with higher risk of developing coronary heart disease.
-
 * MaxHR: has a negative coefficient of -0.0106028269. This suggests that as the maximum heart rate decreases, the likelihood of developing coronary heart disease decrease as well. This makes sense, as a high resting heart rate means that the heart is working harder than expected, and therefore leading to believe something is wrong.
 
-* ExerciseAngina: ExerciseAnginaY has a positive coefficient of 0.3537110430, indicating that experiencing exercise-induced angina is associated with a higher probability of having coronary heart disease.
 
-* Oldpeak: represents ST depression induced by exercise relative to rest and has a positive coefficient of 0.3537110430. This implies that as the the presence of ST segment depression correlates to having coronary heart disease and may indicate coronary ischemia.
 
-* ST_Slope: represents the slope of the peak exercise ST segment. The coefficient for "ST_SlopeFlat" is 1.0240322651, suggesting that having a flat ST segment during exercise is correlated to having coronary heart disease and may indicate coronary ischemia.
+
+
 
 
 
@@ -677,13 +686,8 @@ anova(glm.model.reduced, glm.model.full, test="Chisq")
 
 ```
 
-### Model Comparison
-
-```{r, include=TRUE}
 
 
-
-```
 
 ### Naive Bayes Classifier
 
@@ -712,7 +716,7 @@ naivebayes.metrics
 
 ```
 
-
+### Model Comparison
 
 ```{r, include=TRUE}
 
