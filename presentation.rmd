@@ -429,9 +429,8 @@ Let's now compute the R-squared and the Variance Inflation Factor (VIF) for each
 
 R-squared is a measure of how well the model explains the data and of how much variance in the dependent variable is explained by the independent variables in the model. The VIF, on the other hand, is a measure of how much the variance of the estimated regression coefficient for a given independent variable is inflated due to multicollinearity.
 
-A VIF value of 1 indicates no multicollinearity, while values greater than 1 suggest increasing levels of multicollinearity, with higher values indicating more severe multicollinearity.
+A VIF value of 1 indicates no multicollinearity. Values between 1 and 5 indicates moderate correlation between a given predictor variable and other predictor variables in the model, but not severe enough to require attention. A value greater than 5 indicates potentially severe correlation between a given predictor variable and other predictor variables in the model. In this case, the coefficient estimates and p-values in the regression output are likely unreliable.
 
-TODO: check for multicollinearity
 
 ```{r, include=TRUE}
 
@@ -450,6 +449,8 @@ for (mdl in glm.models){
 
 
 ```
+Each model's VIF indicate some minor, although not severe, correlation between predictor
+
 
 
 ### Bayesian Information Criterion (BIC)

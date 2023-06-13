@@ -783,10 +783,13 @@ independent variables in the model. The VIF, on the other hand, is a
 measure of how much the variance of the estimated regression coefficient
 for a given independent variable is inflated due to
 multicollinearity.</p>
-<p>A VIF value of 1 indicates no multicollinearity, while values greater
-than 1 suggest increasing levels of multicollinearity, with higher
-values indicating more severe multicollinearity.</p>
-<p>TODO: check for multicollinearity</p>
+<p>A VIF value of 1 indicates no multicollinearity. Values between 1 and
+5 indicates moderate correlation between a given predictor variable and
+other predictor variables in the model, but not severe enough to require
+attention. A value greater than 5 indicates potentially severe
+correlation between a given predictor variable and other predictor
+variables in the model. In this case, the coefficient estimates and
+p-values in the regression output are likely unreliable.</p>
 <pre class="r"><code>glm.models = list(glm.model, glm.model.1, glm.model.2, glm.model.3, glm.model.4)
 
 for (mdl in glm.models){
@@ -806,6 +809,8 @@ for (mdl in glm.models){
 ## VIF:  2.06998 
 ## R-Squared:  0.5168578 
 ## VIF:  2.069784</code></pre>
+<p>Each model’s VIF indicate some minor, although not severe,
+correlation between predictor</p>
 </div>
 <div id="bayesian-information-criterion-bic" class="section level3">
 <h3>Bayesian Information Criterion (BIC)</h3>
