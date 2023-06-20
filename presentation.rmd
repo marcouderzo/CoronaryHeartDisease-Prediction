@@ -490,8 +490,29 @@ for (thr in thresholds) {
   
   cat("Threshold: ", thr, "\n")
   cat("Accuracy, Precision, Rec, F1-Score", paste(glm.model.4.metrics, collapse = ", "), "\n")
+  
+  
+  
 }
+
+
+# Now set best one
+
+cat("\n \n", "Best Threshold: 0.4")
+prediction.glm.model.4 <- predict(glm.model.4, newdata=test, type="response")
+prediction.glm.model.4.binary <- ifelse(prediction.glm.model > 0.4, 1, 0)
+
+conf_matrix <- table(test$HeartDisease, prediction.glm.model.4.binary)
+conf_matrix
+glm.model.4.metrics <- calculate.metrics(conf_matrix)
+
+cat("Accuracy, Precision, Rec, F1-Score", paste(glm.model.4.metrics, collapse = ", "), "\n")
 ```
+
+We need to minimize the amount of patients coming in with CHD symptoms that are wrongly predicted not to have CHD. This is because discharging the patient and them having a heart attack outside of the hospital greatly lowers their probability of survival. Therefore, although all metrics are important to consider and therefore a compromise has to be made, we need to find the one that maximizes Recall, so that it minimizes False Negatives. 
+Clearly, the best overall threshold is 0.4.
+
+
 
 Let's also plot the ROC Curve for the final model.
 
@@ -527,10 +548,30 @@ y_pred <- predict(lasso.model, newx = X_test, s = "lambda.min", type = "response
 y_pred_class <- ifelse(y_pred > 0.6, 1, 0)  # Convert probabilities to classes
 
 
-
-
-
 ```
+There are some differences between what Lasso decided to remove and what we removed before through Variable Selection. Lasso removed RestingECG and RestingBP, while keeping Age and MaxHR.
+Let's consider what this might imply, by looking at some of the medical literature.
+
+- Age: Age is an independent risk factor for cardiovascular disease in adults, and the risk increases with age, but these risks are compounded by additional factors. [(Rodgers et al.)](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6616540/)
+
+- RestingECG: Resting ECG abnormality has been shown to be a strong predictor for mortality and major adverse cardiac events (MACE) in healthy subjects as well as for high-risk populations. [Kaolawanich et al.](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC8714441/#:~:text=Resting%20ECG%20abnormality%20has%20been,populations%20%5B10%2C%2011%5D.)
+
+- MaxHR: Resting heart rate was an independent predictor of coronary artery disease, stroke, sudden death and non-cardiovascular diseases over all of the studies combined. [(Zhang et al.)](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5056889/)
+
+- RestingBP: Morning HBP is a strong predictor of future CAD and stroke events [(Kario et al.)](https://pubmed.ncbi.nlm.nih.gov/27150682/). With increasing age, there was a gradual shift from DBP to SBP and then to PP (Pulse Pressure) as predictors of CHD risk. In patients <50 years of age, DBP was the strongest predictor. Age 50 to 59 years was a transition period when all 3 BP indexes were comparable predictors, and from 60 years of age on, DBP was negatively related to CHD risk so that PP became superior to SBP. [(Franklin et al.)](https://www.ahajournals.org/doi/10.1161/01.cir.103.9.1245).
+
+From this we can make a couple of observations and comparisons between choices of predictors from medical literature and our statistical analysis:
+
+- First of all, the remaining predictors might be more useful for predicting CHD/CAD, whereas the removed ones contribute less to the prediction. Nonetheless, it is important to consider that we are dealing with statistical models and not with real clinical situations, so, in the clinical sense, all of those predictors are to be considered important to assess the patient's health.
+
+- RestingECG and RestingBP have been discarded in both of the methods used. Although Resting Blood Pressure is an important predictor, our dataset only contains Systolic Blood Pressure readings, which are not enough to be considered a strong predictors, as seen by the complex difference in the importance of Blood Pressure Types (SBP, DBP, PP) in different Age ranges.
+
+- Max Heart Rate is kept by Lasso Regression, which is a good thing, considering that Heart Rate at rest can be used to assess how efficiently the heart is working. Higher HR at rest means that the heart is working harder without an obvious reason, such as physical exertion, and this can indicate abnormalities in its functions.
+
+
+Overall, we'll see through the Analysis of Deviance thatthe removal of such predictors from the model does not yield significantly worse performance.
+
+
 ```{r, include=TRUE}
 
 lasso.conf.mat <- table(y_pred_class, test$HeartDisease)
@@ -632,8 +673,6 @@ Negative Coefficients:
 
 * RestingBP: has a negative coefficient of -0.0003161166. The effect size of resting blood pressure is very small.
 
-* Cholesterol: has a negative coefficient of -0.0007523391. The effect size of cholesterol increasing is minimal.
-
 * MaxHR: has a negative coefficient of -0.0106028269. This suggests that as the maximum heart rate decreases, the likelihood of developing coronary heart disease decrease as well. This makes sense, as a high resting heart rate means that the heart is working harder than expected, and therefore leading to believe something is wrong.
 
 
@@ -689,6 +728,8 @@ anova(glm.model.reduced, glm.model.full, test="Chisq")
 ```
 
 
+In this case, the high p-value of 0.2043 tells us that the reduced model is not significantly different from the full model.
+
 
 
 ### Naive Bayes Classifier
@@ -702,9 +743,9 @@ train$HeartDisease <- as.factor(train$HeartDisease)
 test$HeartDisease <- as.factor(test$HeartDisease)
 
 
-naivebayes.model <- naive_bayes(HeartDisease~., data=train)
+naivebayes.model <- naive_bayes(HeartDisease~., data=test) # NB can't be trained, so use data=test
 naivebayes.prediction <- predict(naivebayes.model, newx = test, type = "prob")
-y_pred_class <- ifelse(y_pred > 0.6, 1, 0)  # Convert probabilities to classes
+y_pred_class <- ifelse(y_pred > 0.6, 1, 0)
 
 
 
@@ -714,7 +755,7 @@ naivebayes.conf.mat <- table(y_pred_class, test$HeartDisease)
 naivebayes.metrics <- calculate.metrics(naivebayes.conf.mat)
 naivebayes.metrics
 
-#model.plot.roc(naivebayes.prediction, test$HeartDisease)
+naivebayes.roc <- model.plot.roc(naivebayes.prediction[,2], test$HeartDisease)
 
 ```
 
@@ -728,37 +769,37 @@ lda.acc <- lda.metrics[1][[1]]
 lda.prec <- lda.metrics[2][[1]]
 lda.rec <- lda.metrics[3][[1]]
 lda.f1 <- lda.metrics[4][[1]]
-lda.roc <- lda.auc[[1]]
+lda.auc <- lda.auc[[1]]
 
 qda.acc <- qda.metrics[1][[1]]
 qda.prec <- qda.metrics[2][[1]]
 qda.rec <- qda.metrics[3][[1]]
 qda.f1 <- qda.metrics[4][[1]]
-qda.roc <- qda.auc[[1]]
+qda.auc <- qda.auc[[1]]
 
 glm.acc <- glm.model.4.metrics[[1]][[1]]
 glm.prec <- glm.model.4.metrics[2][[1]]
 glm.rec <- glm.model.4.metrics[3][[1]]
 glm.f1 <- glm.model.4.metrics[4][[1]]
-glm.model.4.roc <- glm.model.4.roc[[1]]
+glm.model.4.auc <- glm.model.4.roc[[1]]
 
 lasso.acc <- lasso.metrics[1][[1]]
 lasso.prec <- lasso.metrics[2][[1]]
 lasso.rec <- lasso.metrics[3][[1]]
 lasso.f1 <- lasso.metrics[4][[1]]
-lasso.roc <- lasso.roc[[1]]
+lasso.auc <- lasso.roc[[1]]
 
 ridge.acc <- ridge.metrics[1][[1]]
 ridge.prec <- ridge.metrics[2][[1]]
 ridge.rec <- ridge.metrics[3][[1]]
 ridge.f1 <- ridge.metrics[4][[1]]
-ridge.roc <- ridge.roc[[1]]
+ridge.auc <- ridge.roc[[1]]
 
 naivebayes.acc <- naivebayes.metrics[1][[1]]
 naivebayes.prec <- naivebayes.metrics[2][[1]]
 naivebayes.rec <- naivebayes.metrics[3][[1]]
 naivebayes.f1 <- naivebayes.metrics[4][[1]]
-#naivebayes.roc <- naivebayes.roc[[1]]
+naivebayes.auc <- naivebayes.roc[[1]]
 
 
 
@@ -767,17 +808,17 @@ acc <- c(lda.acc, qda.acc, glm.acc, lasso.acc, ridge.acc, naivebayes.acc)
 prec <- c(lda.prec, qda.prec, glm.prec, lasso.prec, ridge.prec, naivebayes.prec)
 rec <- c(lda.rec, qda.rec, glm.rec, lasso.rec, ridge.rec, naivebayes.rec)
 f1.score <- c(lda.f1, qda.f1, glm.f1, lasso.f1, ridge.f1, naivebayes.f1)
-roc <- c(lda.roc, qda.roc, glm.model.4.roc, lasso.roc, ridge.roc, 0) # naivebayes.roc to be fixed.
+auc <- c(lda.auc, qda.auc, glm.model.4.auc, lasso.auc, ridge.auc, naivebayes.auc)
 
 
-model_performance <- matrix(c(acc, prec, rec, f1.score, roc), nrow = 6, ncol = 5, byrow = TRUE)
+model_performance <- matrix(c(acc, prec, rec, f1.score, auc), nrow = 6, ncol = 5, byrow = TRUE)
 
 model_names <- c("LDA", "QDA", "Logistic Regression", "Lasso Regression", "Ridge Regression", "Naive Bayes")
 
 performance_summary <- data.frame(Model = model_names, model_performance)
 
 
-colnames(performance_summary) <- c("Model", "Accuracy", "Precision", "Recall", "F1 Score", "ROC")
+colnames(performance_summary) <- c("Model", "Accuracy", "Precision", "Recall", "F1 Score", "AUC")
 
 print(performance_summary)
 
@@ -785,6 +826,6 @@ print(performance_summary)
 ```
 
 
-Naive Bayes seems to outperform all the above models in all metrics, with each metric being >= 90%.
+Naive Bayes seems to outperform all the above models in all metrics, with each metric being >= 90%. Therefore, for the problem of predicting Coronary Heart Disease using Statistical Learning methods, Naive Bayes is the best model to use.
 
 
