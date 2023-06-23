@@ -371,7 +371,7 @@ qda.auc
 
 <br>
 
-### Simple Logistic Regression
+### Generalized Linear Model and Simple Logistic Regression
 
 Logistic Regression is the easiest and most common model to perform binary classification. The family set is binomial, as the dependent variable is binary.
 
@@ -389,7 +389,7 @@ We calculate the odds of success given the R-squared value, so that we evaluate 
 ```{r, include=TRUE}
 
 r2 <- 1 - (glm_summary$deviance/glm_summary$null.deviance)
-1/(1-r2)
+r2
 ```
 
 We run the model on the test data, with an initial threshold value of 0.6, to be tuned later through Variable Selection
@@ -402,6 +402,9 @@ prediction.glm.model.binary <- ifelse(prediction.glm.model > 0.6, 1, 0)
 conf_matrix <- table(test$HeartDisease, prediction.glm.model.binary)
 glm.model.metrics <- calculate.metrics(conf_matrix)
 glm.model.metrics
+
+glm.model.auc <- model.plot.roc(prediction.glm.model, test$HeartDisease)
+glm.model.auc
 ```
 
 
@@ -415,13 +418,15 @@ The p value tells how often one would expect to see a test statistic as extreme 
 The p value is a proportion: if the p value is 0.05, that means that 5% of the time one would see a test statistic at least as extreme as the one they found if the null hypothesis was true.
 
 
-We found out that Age, RestingECG and MaxHR are not good enough predictors, having a p-value >= 0.05. We thus only kept predictors with a p-value < 0.05. 
+We found out that Age, RestingECG and MaxHR, and RestingBP are not good enough predictors, having a p-value >= 0.05. We thus only kept predictors with a p-value < 0.05. The only exception is ST_SlopeUp which has a p-value > 0.5. The reason why we are keeping this is that ST segment elevation is usually a good predictor of abnormality in the heart electrophysiology, consistent with Myocardial Infarction due to the blockage of the coronary artery.
 
 ```{r, include=TRUE}
 glm.model.1 <- update(glm.model, ~. - Age)
 glm.model.2 <- update(glm.model.1, ~. - RestingECG)
 glm.model.3 <- update(glm.model.2, ~. - MaxHR)
 glm.model.4 <- update(glm.model.3, ~. - RestingBP)
+
+summary(glm.model.4)
 
 ```
 
@@ -455,6 +460,8 @@ Each model's VIF indicate some minor, although not severe, correlation between p
 
 ### Bayesian Information Criterion (BIC)
 
+The Bayesian Information Criterion, often abbreviated BIC, is a metric that is used to compare the goodness of fit of different regression models.
+
 ```{r, include=TRUE}
 glm.models = list(glm.model, glm.model.1, glm.model.2, glm.model.3, glm.model.4)
 
@@ -482,7 +489,7 @@ thresholds = c(0.3, 0.4, 0.5, 0.6)
 for (thr in thresholds) {
 
   prediction.glm.model.4 <- predict(glm.model.4, newdata=test, type="response")
-  prediction.glm.model.4.binary <- ifelse(prediction.glm.model > thr, 1, 0)
+  prediction.glm.model.4.binary <- ifelse(prediction.glm.model.4 > thr, 1, 0)
   
   conf_matrix <- table(test$HeartDisease, prediction.glm.model.4.binary)
   conf_matrix
@@ -500,7 +507,7 @@ for (thr in thresholds) {
 
 cat("\n \n", "Best Threshold: 0.4")
 prediction.glm.model.4 <- predict(glm.model.4, newdata=test, type="response")
-prediction.glm.model.4.binary <- ifelse(prediction.glm.model > 0.4, 1, 0)
+prediction.glm.model.4.binary <- ifelse(prediction.glm.model.4 > 0.4, 1, 0)
 
 conf_matrix <- table(test$HeartDisease, prediction.glm.model.4.binary)
 conf_matrix
@@ -517,15 +524,15 @@ Clearly, the best overall threshold is 0.4.
 Let's also plot the ROC Curve for the final model.
 
 ```{r, include=TRUE}
-glm.model.4.roc <- model.plot.roc(prediction.glm.model.4, test$HeartDisease)
+glm.model.4.auc <- model.plot.roc(prediction.glm.model.4, test$HeartDisease)
+glm.model.4.auc
 
 ```
 
 ### Lasso Regression
 
-Lasso regression is a regularization technique. It is used over regression methods for a more accurate prediction. This model uses shrinkage, that is where data values are shrunk towards a central point as the mean. The lasso procedure encourages simple, sparse models (i.e. models with fewer parameters).
+Lasso regression is a regularization technique. It is used over regression methods for a more accurate prediction. This model uses shrinkage (L1 Regularization). The lasso procedure encourages simple, sparse models (i.e. models with fewer parameters).
 
-Lasso Regression uses L1 regularization technique. It is used when we have more features because it automatically performs feature selection.
 
 ```{r, include=TRUE}
 X <- model.matrix(glm.model)
@@ -569,7 +576,7 @@ From this we can make a couple of observations and comparisons between choices o
 - Max Heart Rate is kept by Lasso Regression, which is a good thing, considering that Heart Rate at rest can be used to assess how efficiently the heart is working. Higher HR at rest means that the heart is working harder without an obvious reason, such as physical exertion, and this can indicate abnormalities in its functions.
 
 
-Overall, we'll see through the Analysis of Deviance thatthe removal of such predictors from the model does not yield significantly worse performance.
+Overall, we'll see through the Analysis of Deviance that the removal of such predictors from the model does not yield significantly worse performance.
 
 
 ```{r, include=TRUE}
@@ -589,7 +596,8 @@ lasso.metrics
 
 ```{r, include=TRUE}
 
-lasso.roc <- model.plot.roc(y_pred, test$HeartDisease)
+lasso.auc <- model.plot.roc(y_pred, test$HeartDisease)
+lasso.auc
 
 ```
 
@@ -642,7 +650,8 @@ ridge.metrics
 
 ```{r, include=TRUE}
 
-ridge.roc <- model.plot.roc(y_pred, test$HeartDisease)
+ridge.auc <- model.plot.roc(y_pred, test$HeartDisease)
+ridge.auc
 ```
 
 Let's now analyze the findings of Ridge Regression:
@@ -755,7 +764,8 @@ naivebayes.conf.mat <- table(y_pred_class, test$HeartDisease)
 naivebayes.metrics <- calculate.metrics(naivebayes.conf.mat)
 naivebayes.metrics
 
-naivebayes.roc <- model.plot.roc(naivebayes.prediction[,2], test$HeartDisease)
+naivebayes.auc <- model.plot.roc(naivebayes.prediction[,2], test$HeartDisease)
+naivebayes.auc
 
 ```
 
@@ -781,25 +791,25 @@ glm.acc <- glm.model.4.metrics[[1]][[1]]
 glm.prec <- glm.model.4.metrics[2][[1]]
 glm.rec <- glm.model.4.metrics[3][[1]]
 glm.f1 <- glm.model.4.metrics[4][[1]]
-glm.model.4.auc <- glm.model.4.roc[[1]]
+glm.model.4.auc <- glm.model.4.auc[[1]]
 
 lasso.acc <- lasso.metrics[1][[1]]
 lasso.prec <- lasso.metrics[2][[1]]
 lasso.rec <- lasso.metrics[3][[1]]
 lasso.f1 <- lasso.metrics[4][[1]]
-lasso.auc <- lasso.roc[[1]]
+lasso.auc <- lasso.auc[[1]]
 
 ridge.acc <- ridge.metrics[1][[1]]
 ridge.prec <- ridge.metrics[2][[1]]
 ridge.rec <- ridge.metrics[3][[1]]
 ridge.f1 <- ridge.metrics[4][[1]]
-ridge.auc <- ridge.roc[[1]]
+ridge.auc <- ridge.auc[[1]]
 
 naivebayes.acc <- naivebayes.metrics[1][[1]]
 naivebayes.prec <- naivebayes.metrics[2][[1]]
 naivebayes.rec <- naivebayes.metrics[3][[1]]
 naivebayes.f1 <- naivebayes.metrics[4][[1]]
-naivebayes.auc <- naivebayes.roc[[1]]
+naivebayes.auc <- naivebayes.auc[[1]]
 
 
 
