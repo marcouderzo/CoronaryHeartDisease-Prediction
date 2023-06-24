@@ -26,7 +26,6 @@ library(naivebayes)
 library(ROCR)
 library(glmnet)
 library(stats)
-library(pROC)
 
 data <- read.csv("data/heart_data.csv", stringsAsFactors = T)
 
@@ -49,17 +48,13 @@ The parameters are:
 
 2. **Sex**: sex of the patient [M: male, F: female]
 
-3. **ChestPainType**: chest pain type [TA: typical angina, ATA: atypical angina, NAP: non-anginal pain, ASY: asymptomatic]
-
-+ Angina is a type of chest pain caused by reduced blood flow to the heart. Angina is a symptom of coronary heart disease.
+3. **ChestPainType**: chest pain type [TA: typical angina, ATA: atypical angina, NAP: non-anginal pain, ASY: asymptomatic]. Angina is a type of chest pain caused by reduced blood flow to the heart. Angina is a symptom of coronary heart disease.
 
 4. **RestingBP**: resting blood pressure [mmHg]
 
 5. **Cholesterol**: serum cholesterol [mm/dl]
 
-6. **FastingBS**: fasting blood sugar [1: if FastingBS > 120 mg/dl, 0: otherwise]
-
-+ This measures the blood sugar level after an overnight fast.
+6. **FastingBS**: fasting blood sugar [1: if FastingBS > 120 mg/dl, 0: otherwise]. This measures the blood sugar level after an overnight fast.
 
 7. **RestingECG**: resting electrocardiogram results [Normal: normal, ST: having ST-T wave abnormality (T wave inversions and/or ST elevation or depression of > 0.05 mV), LVH: showing probable or definite left ventricular hypertrophy by Estes' criteria]
 
@@ -67,10 +62,7 @@ The parameters are:
 
 9. **ExerciseAngina**: exercise-induced angina [Y: yes, N: no]
 
-10. **Oldpeak**: oldpeak = ST [numeric value between -2.6 and 6.2]
-
-+ ST depression refers to a finding on an electrocardiogram, wherein the trace in the ST segment is abnormally low below the baseline.
-Oldpeak measures the depression of the ST slope.
+10. **Oldpeak**: oldpeak = ST [numeric value between -2.6 and 6.2]. ST depression refers to a finding on an electrocardiogram, wherein the trace in the ST segment is abnormally low below the baseline. Oldpeak measures the depression of the ST slope induced by exercise relative to rest.
 
 11. **ST_Slope**: the slope of the peak exercise ST segment [Up: upsloping, Flat: flat, Down: downsloping]
 
@@ -793,8 +785,6 @@ print(performance_summary)
 ```
 ```{r, include=TRUE}
 
-
-# Create ROC curves (assuming roc1, roc2, roc3 are already calculated)
 roc.lda <- roc(test$HeartDisease, lda.res[,2])
 roc.qda <- roc(test$HeartDisease, qda.pred$posterior[,2])
 roc.glm <- roc(test$HeartDisease, prediction.glm.model.4)

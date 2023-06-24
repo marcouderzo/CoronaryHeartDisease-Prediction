@@ -372,24 +372,15 @@ observations.</p>
 <li><p><strong>Sex</strong>: sex of the patient [M: male, F:
 female]</p></li>
 <li><p><strong>ChestPainType</strong>: chest pain type [TA: typical
-angina, ATA: atypical angina, NAP: non-anginal pain, ASY:
-asymptomatic]</p></li>
-</ol>
-<ul>
-<li>Angina is a type of chest pain caused by reduced blood flow to the
-heart. Angina is a symptom of coronary heart disease.</li>
-</ul>
-<ol start="4" style="list-style-type: decimal">
+angina, ATA: atypical angina, NAP: non-anginal pain, ASY: asymptomatic].
+Angina is a type of chest pain caused by reduced blood flow to the
+heart. Angina is a symptom of coronary heart disease.</p></li>
 <li><p><strong>RestingBP</strong>: resting blood pressure
 [mmHg]</p></li>
 <li><p><strong>Cholesterol</strong>: serum cholesterol [mm/dl]</p></li>
 <li><p><strong>FastingBS</strong>: fasting blood sugar [1: if FastingBS
-&gt; 120 mg/dl, 0: otherwise]</p></li>
-</ol>
-<ul>
-<li>This measures the blood sugar level after an overnight fast.</li>
-</ul>
-<ol start="7" style="list-style-type: decimal">
+&gt; 120 mg/dl, 0: otherwise]. This measures the blood sugar level after
+an overnight fast.</p></li>
 <li><p><strong>RestingECG</strong>: resting electrocardiogram results
 [Normal: normal, ST: having ST-T wave abnormality (T wave inversions
 and/or ST elevation or depression of &gt; 0.05 mV), LVH: showing
@@ -400,14 +391,10 @@ value between 60 and 202]</p></li>
 <li><p><strong>ExerciseAngina</strong>: exercise-induced angina [Y: yes,
 N: no]</p></li>
 <li><p><strong>Oldpeak</strong>: oldpeak = ST [numeric value between
--2.6 and 6.2]</p></li>
-</ol>
-<ul>
-<li>ST depression refers to a finding on an electrocardiogram, wherein
-the trace in the ST segment is abnormally low below the baseline.
-Oldpeak measures the depression of the ST slope.</li>
-</ul>
-<ol start="11" style="list-style-type: decimal">
+-2.6 and 6.2]. ST depression refers to a finding on an
+electrocardiogram, wherein the trace in the ST segment is abnormally low
+below the baseline. Oldpeak measures the depression of the ST slope
+induced by exercise relative to rest.</p></li>
 <li><p><strong>ST_Slope</strong>: the slope of the peak exercise ST
 segment [Up: upsloping, Flat: flat, Down: downsloping]</p></li>
 <li><p><strong>HeartDisease</strong>: output class [1: heart disease, 0:
@@ -1304,8 +1291,7 @@ print(performance_summary)</code></pre>
 ## 4    Lasso Regression 0.8478261 0.8267717 0.8898305 0.8571429 0.9130036
 ## 5    Ridge Regression 0.8695652 0.8503937 0.9075630 0.8780488 0.9192722
 ## 6         Naive Bayes 0.8652174 0.8503937 0.9000000 0.8744939 0.9195016</code></pre>
-<pre class="r"><code># Create ROC curves (assuming roc1, roc2, roc3 are already calculated)
-roc.lda &lt;- roc(test$HeartDisease, lda.res[,2])
+<pre class="r"><code>roc.lda &lt;- roc(test$HeartDisease, lda.res[,2])
 roc.qda &lt;- roc(test$HeartDisease, qda.pred$posterior[,2])
 roc.glm &lt;- roc(test$HeartDisease, prediction.glm.model.4)
 roc.lasso &lt;- roc(test$HeartDisease, lasso.y_pred)
