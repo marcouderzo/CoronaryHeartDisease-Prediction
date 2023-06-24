@@ -1,5 +1,5 @@
 ---
-title: "Presentation"
+title: "Prediction of Coronary Artery Disease"
 author: "Francesco Vo & Marco Uderzo"
 date: "2023-04-30"
 output: html_document
@@ -32,7 +32,7 @@ data <- read.csv("data/heart_data.csv", stringsAsFactors = T)
 attach(data)
 ```
 
-# Prediction of Coronary Artery Disease
+
 
 Cardiovascular diseases (CVDs) are the number one cause of death globally.
 
@@ -160,6 +160,7 @@ fastingBS.plot <- ggplot(data, aes(x=FastingBS, group=HeartDisease,
 chol.plot
 oldpeak.plot
 fastingBS.plot
+restingBP.plot
 ```
 
 ```{r, include=TRUE}
@@ -442,12 +443,12 @@ A VIF value of 1 indicates no multicollinearity. Values between 1 and 5 indicate
 
 glm.models = list(glm.model, glm.model.1, glm.model.2, glm.model.3, glm.model.4)
 
+i=0
 for (mdl in glm.models){
-  
   r2 <- 1 - (mdl$deviance/mdl$null.deviance)
-  cat("R-Squared: ", r2, "\n")
   vif <- 1/(1-r2)
-  cat("VIF: ", vif, "\n")
+  cat("GLM Model ", i, " - ", "VIF: ", vif, "\n")
+  i=i+1
 }
 
 
@@ -465,9 +466,11 @@ The Bayesian Information Criterion, often abbreviated BIC, is a metric that is u
 ```{r, include=TRUE}
 glm.models = list(glm.model, glm.model.1, glm.model.2, glm.model.3, glm.model.4)
 
+i=0
 for (mdl in glm.models){
   glm.bic <- BIC(mdl)
-  print(glm.bic)
+  cat("GLM Model ", i, " - ","BIC: ", glm.bic, "\n")
+  i=i+1
 }
 
 ```
