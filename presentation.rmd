@@ -32,6 +32,16 @@ data <- read.csv("data/heart_data.csv", stringsAsFactors = T)
 attach(data)
 ```
 
+# Prediction of Coronary Artery Disease
+
+Cardiovascular diseases (CVDs) are the number one cause of death globally.
+
+Coronary Heart Disease is a common and very deadly occurrence, and this dataset contains 11 features that can be used to predict it.
+
+People with cardiovascular diseases or who are at high cardiovascular risk need early detection wherein statistical learning models can be of great help.
+
+
+
 ## Project goal and dataset description
 https://www.kaggle.com/datasets/fedesoriano/heart-failure-prediction
 
