@@ -592,7 +592,7 @@ Lasso regression is a regularization technique. It is used over regression metho
 X <- model.matrix(glm.model)
 y <- train$HeartDisease
 
-lasso.model <- cv.glmnet(X, y, family = "binomial", type.measure = "class")
+lasso.model <- cv.glmnet(X, y, family = "binomial", type.measure = "class") #cross-validation handled by glmnet
 
 lasso.coef <- coef(lasso.model, s = "lambda.min")
 lasso.vars <- rownames(lasso.coef)[-1][lasso.coef[-1,] != 0]
@@ -673,7 +673,7 @@ The negative signs on some of the coefficients indicate that an increase in the 
 X <- model.matrix(glm.model)
 y <- train$HeartDisease
 
-ridge.fit <- cv.glmnet(X, y, family = "binomial", alpha = 0, type.measure = "deviance") #cross-validationlam
+ridge.fit <- cv.glmnet(X, y, family = "binomial", alpha = 0, type.measure = "deviance") #cross-validation handled by glmnet
 
 coef(ridge.fit, s = "lambda.min")
 
@@ -714,7 +714,7 @@ train$HeartDisease <- as.factor(train$HeartDisease)
 test$HeartDisease <- as.factor(test$HeartDisease)
 
 
-naivebayes.model <- naive_bayes(HeartDisease~., data=test) # NB can't be trained, so use data=test
+naivebayes.model <- naive_bayes(HeartDisease~., data=test)
 naivebayes.prediction <- predict(naivebayes.model, newx = test, type = "prob")
 naivebayes.y_pred_class <- ifelse(naivebayes.prediction > 0.6, 1, 0)
 
@@ -822,6 +822,26 @@ legend("bottomright", legend = c("LDA", "QDA", "GLM","Lasso", "Ridge", "Naive Ba
 
 ```
 
-To conclude which is the best
+## Conclusions
+
+All models perform relatively good, with similar ROCs and each with their own strengths and weaknesses in their metrics.
+Considering Recall as most important, the best models are:
+
+- GLM: Logistic Regression (Best threshold: 0.4) 
+- Ridge Regression (Best λ: ~ 0.031)
+- Naive Bayes (Best threshold: 0.6)
+
+Considering all models, the very best predictors are:
+
+- Sex[“M”]: males are more likely to suffer from CAD.
+- ChestPainType[“ATA, “NAP”]: Atypical Angina is a known symptom preceding Myocardial Infarction. Non-Anginal Pain is non-ischemic related.
+- ST_Slope[“Up”, “Flat”]: ST Segment Elevation is a known anomaly of the electrophysiology of heart due to coronary blockage and therefore myocardial ischemia.
+- Oldpeak: ST Segment Depression induced by exercise relative to rest might indicate myocardial ischemia.
+
+
+
+
+
+
 
 
