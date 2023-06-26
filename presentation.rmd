@@ -242,6 +242,8 @@ For each continuous variable we see that:
 
 ### Correlations
 ```{r, include=TRUE}
+cont.idx <- c(1,4,8,10)
+
 cor.data <- cor(data[,cont.idx])
 corrplot(cor.data,
          method="color",
