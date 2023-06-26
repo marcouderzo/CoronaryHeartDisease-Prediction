@@ -176,6 +176,8 @@ chisq.test(exan.t)
 st.t <- table(HeartDisease, ST_Slope)
 chisq.test(st.t)
 
+cont.idx <- c(1,4,8,10)
+
 # correlation matrix
 cor.data <- cor(data[,cont.idx])
 corrplot(cor.data,
