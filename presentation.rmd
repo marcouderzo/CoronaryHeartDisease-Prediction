@@ -837,9 +837,9 @@ legend("bottomright", legend = c("LDA", "QDA", "GLM","Lasso", "Ridge", "Naive Ba
 All models perform relatively good, with similar ROCs and each with their own strengths and weaknesses in their metrics.
 Considering Recall as most important, the best models are:
 
-- GLM: Logistic Regression (Best threshold: 0.4) 
-- Ridge Regression (Best λ: ~ 0.031)
-- Naive Bayes (Best threshold: 0.6)
+- GLM with Logistic Regression (Best threshold: 0.4): maximizes Recall
+- LDA: Lowest FN-Rate
+- GLM with Ridge
 
 Considering all models, the very best predictors are:
 
