@@ -267,7 +267,7 @@ G <- abs(R)>0.1
 diag(G) <- 0
 ```
 
-![](img/igraph.png){width="50%"}
+![](img/igraph2.png){width="50%"}
 
 <br>
 
@@ -288,7 +288,8 @@ calculate.metrics <- function(conf.mat) {
   prec <- conf.mat[2,2] / sum(conf.mat[,2])
   rec <- conf.mat[2,2] / sum(conf.mat[2,])
   f1.score <- 2*prec*rec/(prec+rec)
-  out <- list(acc, prec, rec, f1.score)
+  fn.rate <- conf.mat[1,2]/sum(conf.mat[,2])
+  out <- list(acc, prec, rec, f1.score, fn.rate)
   return(out)
 }
 
@@ -350,7 +351,7 @@ classifier; this is what we would expect if the predictors are not associated wi
 lda.auc <- model.plot.roc(lda.res[,2], test$HeartDisease)
 lda.auc
 
-ldahist(lda.pred$x[,1], g=lda.pred$class, col=2)
+# ldahist(lda.pred$x[,1], g=lda.pred$class, col=2)
 ```
 
 <br>
@@ -570,8 +571,8 @@ glm.model.4.metrics <- calculate.metrics(conf_matrix)
 cat("Accuracy, Precision, Rec, F1-Score", paste(glm.model.4.metrics, collapse = ", "), "\n")
 ```
 
-We need to minimize the amount of patients coming in with CHD symptoms that are wrongly predicted not to have CHD. This is because discharging the patient and them having a heart attack outside of the hospital greatly lowers their probability of survival. Therefore, although all metrics are important to consider and therefore a compromise has to be made, we need to find the one that maximizes Recall, so that it minimizes False Negatives, while trying not to lose much on the other metrics. 
-Clearly, the best overall threshold is 0.4.
+We need to minimize the amount of patients coming in with CHD symptoms that are wrongly predicted not to have CHD. This is because discharging the patient and them having a heart attack outside of the hospital greatly lowers their probability of survival. Therefore, although all metrics are important to consider and therefore a compromise has to be made, we need to find the one that maximizes Recall, so that it increases the prediction of patients with the disease, while trying not to lose much on the other metrics. 
+The best overall threshold is 0.4.
 
 
 
@@ -743,36 +744,42 @@ lda.acc <- lda.metrics[1][[1]]
 lda.prec <- lda.metrics[2][[1]]
 lda.rec <- lda.metrics[3][[1]]
 lda.f1 <- lda.metrics[4][[1]]
+lda.fn <- lda.metrics[5][[1]]
 lda.auc <- lda.auc[[1]]
 
 qda.acc <- qda.metrics[1][[1]]
 qda.prec <- qda.metrics[2][[1]]
 qda.rec <- qda.metrics[3][[1]]
 qda.f1 <- qda.metrics[4][[1]]
+qda.fn <- qda.metrics[5][[1]]
 qda.auc <- qda.auc[[1]]
 
 glm.4.acc <- glm.model.4.metrics[[1]][[1]]
 glm.4.prec <- glm.model.4.metrics[2][[1]]
 glm.4.rec <- glm.model.4.metrics[3][[1]]
 glm.4.f1 <- glm.model.4.metrics[4][[1]]
+glm.4.fn <- glm.model.4.metrics[5][[1]]
 glm.4.auc <- glm.model.4.auc[[1]]
 
 lasso.acc <- lasso.metrics[1][[1]]
 lasso.prec <- lasso.metrics[2][[1]]
 lasso.rec <- lasso.metrics[3][[1]]
 lasso.f1 <- lasso.metrics[4][[1]]
+lasso.fn <- lasso.metrics[5][[1]]
 lasso.auc <- lasso.auc[[1]]
 
 ridge.acc <- ridge.metrics[1][[1]]
 ridge.prec <- ridge.metrics[2][[1]]
 ridge.rec <- ridge.metrics[3][[1]]
 ridge.f1 <- ridge.metrics[4][[1]]
+ridge.fn <- ridge.metrics[5][[1]]
 ridge.auc <- ridge.auc[[1]]
 
 naivebayes.acc <- naivebayes.metrics[1][[1]]
 naivebayes.prec <- naivebayes.metrics[2][[1]]
 naivebayes.rec <- naivebayes.metrics[3][[1]]
 naivebayes.f1 <- naivebayes.metrics[4][[1]]
+naivebayes.fn <- naivebayes.metrics[5][[1]]
 naivebayes.auc <- naivebayes.auc[[1]]
 
 
@@ -782,17 +789,18 @@ acc <- c(lda.acc, qda.acc, glm.4.acc, lasso.acc, ridge.acc, naivebayes.acc)
 prec <- c(lda.prec, qda.prec, glm.4.prec, lasso.prec, ridge.prec, naivebayes.prec)
 rec <- c(lda.rec, qda.rec, glm.4.rec, lasso.rec, ridge.rec, naivebayes.rec)
 f1.score <- c(lda.f1, qda.f1, glm.4.f1, lasso.f1, ridge.f1, naivebayes.f1)
+fn.rate <- c(lda.fn, qda.fn, glm.4.fn, lasso.fn, ridge.fn, naivebayes.fn)
 auc <- c(lda.auc, qda.auc, glm.4.auc, lasso.auc, ridge.auc, naivebayes.auc)
 
 
-model_performance <- matrix(c(acc, prec, rec, f1.score, auc), nrow = 6, ncol = 5, byrow = FALSE)
+model_performance <- matrix(c(acc, prec, rec, f1.score, fn.rate, auc), nrow = 6, ncol = 6, byrow = FALSE)
 
 model_names <- c("LDA", "QDA", "Logistic Regression", "Lasso Regression", "Ridge Regression", "Naive Bayes")
 
 performance_summary <- data.frame(Model = model_names, model_performance)
 
 
-colnames(performance_summary) <- c("Model", "Accuracy", "Precision", "Recall", "F1 Score", "AUC")
+colnames(performance_summary) <- c("Model", "Accuracy", "Precision", "Recall", "F1 Score", "FN Rate", "AUC")
 
 print(performance_summary)
 
