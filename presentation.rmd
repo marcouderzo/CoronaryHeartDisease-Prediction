@@ -422,7 +422,7 @@ The p value, or probability value, tells how likely it is that the data could ha
 
 The p value tells how often one would expect to see a test statistic as extreme or more extreme than the one calculated by the statistical test if the null hypothesis of that test was true. The p value gets smaller as the test statistic calculated from the data gets further away from the range of test statistics predicted by the null hypothesis.
 
-We found out that Age, RestingECG and MaxHR, and RestingBP are not good enough predictors, having a p-value >= 0.05. We thus only kept predictors with a p-value < 0.05. The only exception is ST_SlopeUp which has a p-value > 0.5. The reason why we are keeping this is that ST segment elevation is usually a good predictor of abnormality in the heart electrophysiology, consistent with Myocardial Infarction due to the blockage of at least of one the coronary arteries. [Akbar et al.](https://www.ncbi.nlm.nih.gov/books/NBK532281/)
+We found out that Age, RestingECG and MaxHR, and RestingBP are not good enough predictors, having a p-value >= 0.05. We thus only kept predictors with a p-value < 0.05. The only exception is ST_SlopeUp which has a p-value > 0.5. The reason why we are keeping this is that ST segment depression is usually a good predictor of abnormality in the heart electrophysiology, consistent with Myocardial Infarction due to the blockage of at least of one the coronary arteries. [Diderholm et al.](https://pubmed.ncbi.nlm.nih.gov/11741361/)
 
 ```{r, include=TRUE}
 glm.model.1 <- update(glm.model, ~. - Age)
@@ -845,8 +845,8 @@ Considering all models, the very best predictors are:
 
 - Sex[“M”]: males are more likely to suffer from CAD.
 - ChestPainType[“ATA, “NAP”]: Atypical Angina is a known symptom preceding Myocardial Infarction. Non-Anginal Pain is non-ischemic related.
-- ST_Slope[“Up”, “Flat”]: ST Segment Elevation is a known anomaly of the electrophysiology of heart due to coronary blockage and therefore myocardial ischemia.
-- Oldpeak: ST Segment Depression induced by exercise relative to rest might indicate myocardial ischemia.
+- ST_Slope[“Up”, “Flat”]: ST Segment Depression is a known anomaly of the electrophysiology of heart due to coronary blockage and therefore myocardial ischemia.
+- Oldpeak: variations in ST Segment Depression induced by exercise relative to rest indicate myocardial ischemia.
 
 
 
