@@ -1,15 +1,13 @@
-# Coronary Heart Disease Prediction Project
+# 🫀 Coronary Heart Disease Prediction Project 🫀
 Statistical Learning Project, Data Science @ UniPD
 
 **Authors**: Marco Uderzo, Francesco Vo
 
 ## Context
 
-Cardiovascular diseases (CVDs) are the number 1 cause of death globally, taking an estimated 17.9 million lives each year, which accounts for 31% of all deaths worldwide. Four out of five CVD deaths are due to heart attacks and strokes, and one-third of these deaths occur prematurely in people under 70 years of age. 
+Cardiovascular diseases (CVDs) are the #1 cause of death globally, taking an estimated 17.9 million lives each year, which accounts for 31% of all deaths worldwide. Four out of five CVD deaths are due to heart attacks and strokes, and one-third of these deaths occur prematurely in people under 70 years of age. 
 
-Coronary Heart Disease (or Coronary Artery Disease) is a common and very deadly occurrence, and this dataset contains 11 features that can be used to predict it.
-
-People with cardiovascular diseases or who are at high cardiovascular risk need early detection wherein statistical learning models can be of great help.
+*Coronary Heart Disease (or Coronary Artery Disease)* is a common and very deadly occurrence, and this dataset contains 11 features that can be used to predict it. People with cardiovascular diseases or who are at high cardiovascular risk need early detection wherein statistical learning models can be of great help.
 
 
 ## Dataset Source
@@ -20,13 +18,15 @@ This dataset was created by combining different datasets already available indep
 - Hungarian: 294 observations
 - Switzerland: 123 observations
 - Long Beach VA: 200 observations
-- Stalog (Heart) Data Set: 270 observations
+- Stalog (Heart) Dataset: 270 observations
 
-Total: 1190 observations
+Observations:
 
-Duplicated: 272 observations
+- Total: 1190 observations
 
-Final dataset: 918 observations
+- Duplicated: 272 observations
 
-Every dataset used can be found under the Index of heart disease datasets from UCI Machine Learning Repository at [this link](https://archive.ics.uci.edu/ml/machine-learning-databases/heart-disease/)
+- Final dataset: 918 observations
+
+
 
